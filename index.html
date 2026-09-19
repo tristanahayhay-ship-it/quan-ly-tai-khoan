@@ -1,3 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Trị Tài Khoản</title>
+    <script src="https://tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cloudflare.com">
+</head>
+<body class="bg-slate-900 text-slate-100 font-sans antialiased">
+    <div class="flex h-screen overflow-hidden">
+        <!-- SIDEBAR MENU DỌC -->
+        <aside class="w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between hidden md:flex">
+            <div class="p-5">
+                <div class="flex items-center gap-3 px-2 py-3 border-b border-slate-800 mb-6">
+                    <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-black text-white">M</div>
+                    <span class="text-sm font-black text-white">LOCAL SYSTEM</span>
+                </div>
+                <nav class="space-y-1" id="menuNav"></nav>
+            </div>
+            <div class="p-4 border-t border-slate-800 text-[10px] font-bold text-emerald-400 text-center">
+                <i class="fa-solid fa-database"></i> LƯU TRỮ TRÊN TRÌNH DUYỆT
+            </div>
+        </aside>
+        <!-- KHÔNG GIAN ĐIỀU HÀNH CHÍNH -->
+        <main class="flex-1 flex flex-col h-full bg-slate-900 overflow-y-auto">
+            <header class="bg-slate-950/40 border-b border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-50">
+                <h2 class="text-base font-black text-white flex items-center gap-2">
+                    <i id="header-icon" class="fa-solid fa-credit-card text-blue-500"></i> <span id="main-header-title">BK Personal</span>
+                </h2>
+                <div class="flex items-center gap-4">
+                    <div id="liveClock" class="text-xs font-mono font-bold text-slate-400 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-xl">00:00:00</div>
+                    <button onclick="clearAllDataInTab()" class="px-2 py-1.5 bg-rose-950/40 hover:bg-rose-600 border border-rose-900/30 text-rose-400 text-xs font-bold rounded-xl transition-all">Xóa hết trang này</button>
+                </div>
+            </header>
+            
+            <div class="p-6 space-y-6 max-w-7xl w-full mx-auto">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- BẢNG NHẬP LIỆU -->
+                    <div class="bg-slate-950/60 border border-slate-800 p-5 rounded-2xl h-fit shadow-xl">
+                        <form id="systemInputForm" onsubmit="processFormSubmit(event)" class="space-y-4 text-xs">
+                            <div>
+                                <label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Mã Đối Tác / 卡商</label>
+                                <input type="text" id="form-ma" required class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl font-bold text-white outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Số Tài Khoản / 卡号</label>
+                                <input type="text" id="form-stk" required class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl font-mono text-white outline-none">
+                            </div>
+                            <div id="form-dynamic-zone" class="space-y-4"></div>
+                            <div id="form-status-container">
+                                <label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Trạng Thái / 状态</label>
+                                <input type="text" id="form-trangthai" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl text-white outline-none">
+                            </div>
+                            <div>
+                                <label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide" id="form-label-ghichu">Ghi Chú Vận Hành</label>
+                                <textarea id="form-ghichu" rows="2" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl text-white outline-none"></textarea>
+                            </div>
+                            <button type="submit" id="formSubmitBtn" class="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black rounded-xl uppercase tracking-wider shadow-lg">Thêm Vào Hệ Thống</button>
+                        </form>
+                    </div>
+                    <!-- KHU VỰC BẢNG HIỂN THỊ VÀ BỘ LỌC TÌM KIẾM -->
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="bg-slate-950/40 border border-slate-800 p-4 rounded-2xl grid grid-cols-1 sm:grid-cols-3 gap-3 shadow-inner">
+                            <div class="sm:col-span-2 text-xs">
+                                <label class="block font-bold text-slate-400 mb-1 uppercase">Bộ lọc tìm kiếm từ khóa</label>
+                                <input type="text" id="systemSmartSearch" onkeyup="applySystemFilters()" placeholder="Tìm nhanh theo số ví, mã nhà xe, lỗi..." class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-white outline-none">
+                            </div>
+                            <div class="text-xs">
+                                <label class="block font-bold text-slate-400 mb-1 uppercase">Lọc nhanh trạng thái</label>
+                                <select id="systemStatusSelect" onchange="applySystemFilters()" class="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl font-bold text-slate-300 outline-none">
+                                    <option value="">-- Tất cả --</option>
+                                    <option value="上架">🟢 Lên sàn (上架)</option>
+                                    <option value="下架">🔴 Hạ sàn (下架)</option>
+                                    <option value="盗刷">🚨 Quẹt trộm (盗刷)</option>
+                                    <option value="风控">🔒 Phong tỏa (风控)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="bg-slate-950/40 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+                            <div class="p-3 bg-slate-950/80 text-[11px] text-slate-400 flex justify-between font-bold border-b border-slate-800">
+                                <span>DANH SÁCH DỮ LIỆU ĐANG LƯU</span>
+                                <span>Tổng cộng: <span id="widget-visible-count" class="text-blue-400">0</span> dòng</span>
+                            </div>
+                            <table class="w-full text-left border-collapse text-xs" id="systemMainTable">
+                                <thead><tr class="bg-slate-950 text-slate-400 uppercase text-[10px] font-black border-b border-slate-800 tracking-wider" id="systemTableHeaderRow"></tr></thead>
+                                <tbody id="systemTableBody" class="divide-y divide-slate-800/60 font-medium"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script>
+        const tabsConfig = [
+            { id: 'BK_Personal', name: '💳 BK Personal', icon: 'fa-credit-card' },
+            { id: 'bKash', name: '📱 Ví bKash', icon: 'fa-mobile-screen-button' },
+            { id: 'Nagad', name: '🍊 Ví Nagad', icon: 'fa-wallet' },
+            { id: 'Rocket', name: '🚀 Ví Rocket', icon: 'fa-rocket' },
+            { id: 'StatusLog', name: '🔄 Lên / Hạ Sàn', icon: 'fa-arrows-spin' },
+            { id: 'RiskCard', name: '⚠️ Thẻ Rủi Ro (风控)', icon: 'fa-shield-virus' },
+            { id: 'IncidentLog', name: '🚨 Khấu Trừ / Sự Cố', icon: 'fa-triangle-exclamation' },
+            { id: 'PartnerLog', name: '📅 Nhật Ký Đối Tác', icon: 'fa-calendar-days' }
+        ];
+
+        let currentActiveModule = 'BK_Personal';
+        setInterval(() => { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString('vi-VN'); }, 1000);
+
+        const menuNav = document.getElementById('menuNav');
+        tabsConfig.forEach(t => {
+            menuNav.innerHTML += '<button type="button" onclick="changeTab(\'' + t.id + '\')" id="menu-' + t.id + '" class="menu-btn w-full flex items-center justify-between px-3 py-2.5 text-xs font-bold rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all"><span class="flex items-center gap-2.5"><i class="fa-solid ' + t.icon + '"></i> ' + t.name + '</span></button>';
+        });
+
+        function changeTab(moduleName) {
+            currentActiveModule = moduleName;
+            document.querySelectorAll('.menu-btn').forEach(btn => btn.className = "menu-btn w-full flex items-center justify-between px-3 py-2.5 text-xs font-bold rounded-xl text-slate-400 hover:bg-slate-800/50 hover:text-white transition-all");
+            if(document.getElementById('menu-' + moduleName)) document.getElementById('menu-' + moduleName).className = "menu-btn w-full flex items-center justify-between px-3 py-2.5 text-xs font-black rounded-xl bg-blue-600/15 text-blue-400 border border-blue-500/20 transition-all";
+
+            document.getElementById('main-header-title').innerText = tabsConfig.find(t => t.id === moduleName)?.name || moduleName;
+            const dynamicZone = document.getElementById('form-dynamic-zone');
+            const statusContainer = document.getElementById('form-status-container');
+            const labelGhiChu = document.getElementById('form-label-ghichu');
+
+            statusContainer.style.display = "block"; labelGhiChu.innerText = "Ghi Chú Vận Hành";
+
+            if (moduleName === 'BK_Personal') {
+                dynamicZone.innerHTML = '<div><label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Số Lượng / 数量</label><input type="text" id="form-soluong" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl text-white outline-none"></div>';
+            } else if (['bKash', 'Nagad', 'Rocket'].includes(moduleName)) {
+                dynamicZone.innerHTML = '<div><label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Mật Mã / 密码</label><input type="text" id="form-matkhau" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl font-mono text-white outline-none"></div><div><label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Hạn Mức / 跑量</label><input type="text" id="form-soluong" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl text-white outline-none"></div>';
+            } else if (moduleName === 'StatusLog') {
+                statusContainer.style.display = "none";
+                dynamicZone.innerHTML = '<div><label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Dịch Vụ</label><select id="form-dichvu" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl bg-slate-900 text-white font-bold outline-none"><option value="bkash">bKash</option><option value="nagad">Nagad</option><option value="rocket">Rocket</option><option value="BK Personal">BK Personal</option></select></div><div><label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Hạn Mức</label><input type="text" id="form-soluong" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl text-white outline-none"></div><div><label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Lệnh Điều Hành</label><select id="form-log-status" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl bg-slate-900 text-white font-bold outline-none"><option value="上架">上架 (Lên sàn)</option><option value="下架">下架 (Hạ sàn)</option></select></div>';
+            } else if (moduleName === 'RiskCard') {
+                dynamicZone.innerHTML = '<div><label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Loại Dịch Vụ</label><input type="text" id="form-dichvu" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl text-white outline-none"></div><div><label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Số Dư Bị Kẹt</label><input type="text" id="form-soluong" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl font-bold text-rose-400 outline-none"></div>';
+            } else if (moduleName === 'IncidentLog') {
+                statusContainer.style.display = "none"; labelGhiChu.innerText = "Tình trạng xử lý lỗi";
+                dynamicZone.innerHTML = '<div><label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Hệ Thống</label><input type="text" id="form-dichvu" value="BK Personal" readonly class="w-full px-3 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 font-bold outline-none"></div><div><label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Số Tiền Khấu Trừ</label><input type="text" id="form-soluong" required class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl font-bold text-orange-400 outline-none"></div><div><label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Phân Loại Sự Cố</label><select id="form-log-status" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl bg-slate-900 text-white font-bold outline-none"><option value="盗刷">盗刷 (Quẹt trộm)</option><option value="下架">下架 (Lỗi hạ sàn)</option><option value="风控">风控 (Phong tỏa)</option></select></div>';
+            } else if (moduleName === 'PartnerLog') {
+                statusContainer.style.display = "none";
+                dynamicZone.innerHTML = '<div><label class="block font-bold text-slate-400 mb-1 uppercase tracking-wide">Chọn Ngày Làm Việc</label><input type="date" id="form-partner-date" value="2026-09-19" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-700/60 rounded-xl text-white font-bold font-mono outline-none"></div>';
+            }
+            renderHeaderStructure(moduleName); loadLocalData();
+        }
+        function renderHeaderStructure(moduleName) {
+            const h = document.getElementById('systemTableHeaderRow'); const act = '<th class="p-3 text-right">Thao Tác</th>';
+            if (moduleName === 'PartnerLog') h.innerHTML = '<th class="p-3">Mã Đối Tác</th><th class="p-3">Số Tài Khoản</th><th class="p-3">Ngày Làm Việc</th><th class="p-3">Ghi Chú</th>' + act;
+            else if (moduleName === 'RiskCard') h.innerHTML = '<th class="p-3">Mã Số</th><th class="p-3">Số Tài Khoản</th><th class="p-3">Dịch Vụ</th><th class="p-3">Số Dư Kẹt</th><th class="p-3">Phân Loại</th><th class="p-3">Tình Trạng</th>' + act;
+            else if (moduleName === 'IncidentLog') h.innerHTML = '<th class="p-3">Mã Số</th><th class="p-3">Số Tài Khoản</th><th class="p-3">Dịch Vụ</th><th class="p-3">Số Tiền Khấu Trừ</th><th class="p-3">Nguyên Nhân</th><th class="p-3">Ngày Phát Sinh</th><th class="p-3">Trạng Thái</th>' + act;
+            else {
+                const isW = ['bKash', 'Nagad', 'Rocket'].includes(moduleName);
+                h.innerHTML = '<th class="p-3">Mã số</th><th class="p-3">Số tài khoản</th><th class="p-3">Dịch vụ</th><th class="p-3">Hạn mức</th>' + (isW ? '<th class="p-3">Mật mã</th>' : '') + '<th class="p-3">Trạng thái</th><th class="p-3">Mốc thời gian</th>' + act;
+            }
+        }
+
+        function getStorageKey() { return 'local_db_' + currentActiveModule; }
+        function loadLocalData() { populateSystemTable(localStorage.getItem(getStorageKey()) ? JSON.parse(localStorage.getItem(getStorageKey())) : []); }
+
+        function populateSystemTable(list) {
+            const tbody = document.getElementById('systemTableBody'); tbody.innerHTML = '';
+            document.getElementById('widget-visible-count').innerText = list.length;
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" class="p-10 text-center text-slate-500 font-bold bg-slate-950/20">Hệ thống trống. Vui lòng nhập dữ liệu bên trái.</td></tr>';
+                return;
+            }
+            list.forEach((item, index) => {
+                const tr = document.createElement('tr'); tr.className = "hover:bg-slate-800/40 border-b border-slate-800/40 text-slate-300 text-xs";
+                const actBtn = '<td class="p-3 text-right"><button type="button" onclick="deleteRecordByIndex(' + index + ')" class="px-2 py-1 bg-rose-500/20 hover:bg-rose-600 text-rose-400 hover:text-white rounded-md text-[10px]">Xóa</button></td>';
                 if (currentActiveModule === 'PartnerLog') {
                     tr.innerHTML = '<td class="p-3 font-bold">' + item.ma + '</td><td class="p-3 font-mono text-blue-400">' + item.stk + '</td><td class="p-3 font-mono text-amber-400">' + item.trangthai + '</td><td class="p-3 text-slate-400">' + item.ghichu + '</td>' + actBtn;
                 } else if (currentActiveModule === 'RiskCard') {
@@ -11,6 +179,7 @@
                 tbody.appendChild(tr);
             });
         }
+
         function processFormSubmit(event) {
             event.preventDefault();
             const newItem = {
@@ -24,15 +193,18 @@
             document.getElementById('systemInputForm').reset(); changeTab(currentActiveModule);
             alert('🚀 Đã thêm dữ liệu thành công!');
         }
+
         function deleteRecordByIndex(index) {
             if(!confirm('⚠️ Xác nhận xóa dữ liệu dòng này?')) return;
             let list = JSON.parse(localStorage.getItem(getStorageKey())); list.splice(index, 1);
             localStorage.setItem(getStorageKey(), JSON.stringify(list)); loadLocalData();
         }
+
         function clearAllDataInTab() {
             if(!confirm('🚨 Xác nhận xóa sạch dữ liệu trang này?')) return;
             localStorage.removeItem(getStorageKey()); loadLocalData();
         }
+
         function applySystemFilters() {
             const txt = document.getElementById("systemSmartSearch").value.toUpperCase();
             const sel = document.getElementById("systemStatusSelect").value.toUpperCase();
