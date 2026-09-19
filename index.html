@@ -195,3 +195,71 @@
     </script>
 </body>
 </html>
+        function renderHeaderStructure(moduleName) {
+            const h = document.getElementById('systemTableHeaderRow'); const act = `<th class="p-3 text-right">Thao Tác</th>`;
+            if (moduleName === 'PartnerLog') h.innerHTML = `<th class="p-3">Mã Đối Tác</th><th class="p-3">Số Tài Khoản</th><th class="p-3">Ngày Làm Việc</th><th class="p-3">Ghi Chú</th>${act}`;
+            else if (moduleName === 'RiskCard') h.innerHTML = `<th class="p-3">Mã Số</th><th class="p-3">Số Tài Khoản</th><th class="p-3">Dịch Vụ</th><th class="p-3">Số Dư Kẹt</th><th class="p-3">Phân Loại</th><th class="p-3">Tình Trạng</th>${act}`;
+            else if (moduleName === 'IncidentLog') h.innerHTML = `<th class="p-3">Mã Số</th><th class="p-3">Số Tài Khoản</th><th class="p-3">Dịch Vụ</th><th class="p-3">Số Tiền Khấu Trừ</th><th class="p-3">Nguyên Nhân</th><th class="p-3">Ngày Phát Sinh</th><th class="p-3">Trạng Thái</th>${act}`;
+            else {
+                const isW = ['bKash', 'Nagad', 'Rocket'].includes(moduleName);
+                h.innerHTML = `<th class="p-3">Mã số</th><th class="p-3">Số tài khoản</th><th class="p-3">Dịch vụ</th><th class="p-3">Hạn mức</th>` + (isW ? '<th class="p-3">Mật mã</th>' : '') + `<th class="p-3">Trạng thái</th><th class="p-3">Mốc thời gian</th>${act}`;
+            }
+        }
+        function getStorageKey() { return 'standalone_system_data_' + currentActiveModule; }
+        function loadLocalData() { populateSystemTable(localStorage.getItem(getStorageKey()) ? JSON.parse(localStorage.getItem(getStorageKey())) : []); }
+        function populateSystemTable(list) {
+            const tbody = document.getElementById('systemTableBody'); tbody.innerHTML = '';
+            document.getElementById('widget-visible-count').innerText = list.length;
+            if (list.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="12" class="p-10 text-center text-slate-500 font-bold bg-slate-950/20"><i class="fa-solid fa-folder-open block mb-1 text-lg"></i> Hệ thống đang trống. Vui lòng nhập dữ liệu mới bên trái.</td></tr>`;
+                return;
+            }
+            list.forEach((item, index) => {
+                const tr = document.createElement('tr'); tr.className = "hover:bg-slate-800/40 border-b border-slate-800/40 text-slate-300 text-xs";
+                const actBtn = `<td class="p-3 text-right"><button type="button" onclick="deleteRecordByIndex(${index})" class="px-2 py-1 bg-rose-500/20 hover:bg-rose-600 text-rose-400 hover:text-white rounded-md text-[10px]">Xóa</button></td>`;
+                if (currentActiveModule === 'PartnerLog') tr.innerHTML = `<td class="p-3 font-bold">\${item.ma}</td><td class="p-3 font-mono text-blue-400">\${item.stk}</td><td class="p-3 font-mono text-amber-400">\text{\${item.trangthai}}</td><td class="p-3 text-slate-400">\${item.ghichu}</td>\${actBtn}`;
+                else if (currentActiveModule === 'RiskCard') tr.innerHTML = `<td class="p-3">\${item.ma}</td><td class="p-3 font-mono">\text{\${item.stk}}</td><td class="p-3 uppercase">\${item.dichvu}</td><td class="p-3 text-rose-400 font-bold">\${item.soluong}</td><td class="p-3"><span class="px-1.5 py-0.5 bg-rose-500 text-white rounded text-[10px]">\${item.trangthai}</span></td><td class="p-3 text-slate-400">\${item.ghichu}</td>\${actBtn}`;
+                else if (currentActiveModule === 'IncidentLog') tr.innerHTML = `<td class="p-3 font-bold">\${item.ma}</td><td class="p-3 font-mono">\text{\${item.stk}}</td><td class="p-3">\${item.dichvu}</td><td class="p-3 text-orange-400 font-bold">\${item.soluong}</td><td class="p-3"><span class="px-1.5 py-0.5 bg-red-500/20 text-red-400 rounded text-[10px]">\${item.trangthai}</span></td><td class="p-3 text-slate-500 font-mono">\${new Date().toLocaleDateString('vi-VN')}</td><td class="p-3 text-rose-500 font-bold">\${item.ghichu}</td>\${actBtn}`;
+                else {
+                    const isW = ['bKash', 'Nagad', 'Rocket'].includes(currentActiveModule);
+                    tr.innerHTML = `<td class="p-3 font-bold">\${item.ma}</td><td class="p-3 font-mono">\text{\${item.stk}}</td><td class="p-3 uppercase text-slate-500">\${item.dichvu}</td><td class="p-3 text-amber-500">\${item.soluong}</td>` + (isW ? `<td class="p-3 font-mono text-blue-400">\${item.matkhau}</td>` : '') + `<td class="p-3"><span class="px-1.5 py-0.5 bg-slate-800 rounded text-[10px]">\${item.trangthai}</span></td><td class="p-3 text-slate-400">\${item.ghichu}</td>\${actBtn}`;
+                }
+                tbody.appendChild(tr);
+            });
+        }
+        function processFormSubmit(event) {
+            event.preventDefault();
+            const newItem = {
+                ma: document.getElementById('form-ma').value, stk: document.getElementById('form-stk').value,
+                ghichu: document.getElementById('form-ghichu').value || '-', soluong: document.getElementById('form-soluong')?.value || '-',
+                matkhau: document.getElementById('form-matkhau')?.value || '-', dichvu: document.getElementById('form-dichvu')?.value || currentActiveModule,
+                trangthai: document.getElementById('form-log-status')?.value || document.getElementById('form-partner-date')?.value || document.getElementById('form-trangthai')?.value || '-'
+            };
+            const list = localStorage.getItem(getStorageKey()) ? JSON.parse(localStorage.getItem(getStorageKey())) : [];
+            list.unshift(newItem); localStorage.setItem(getStorageKey(), JSON.stringify(list));
+            document.getElementById('systemInputForm').reset(); changeTab(currentActiveModule);
+            alert('🚀 Đã thêm dữ liệu thành công!');
+        }
+        function deleteRecordByIndex(index) {
+            if(!confirm('⚠️ Xác nhận xóa?')) return;
+            let list = JSON.parse(localStorage.getItem(getStorageKey())); list.splice(index, 1);
+            localStorage.setItem(getStorageKey(), JSON.stringify(list)); loadLocalData();
+        }
+        function clearAllDataInTab() {
+            if(!confirm('🚨 Xác nhận xóa sạch dữ liệu trang này?')) return;
+            localStorage.removeItem(getStorageKey()); loadLocalData();
+        }
+        function applySystemFilters() {
+            const txt = document.getElementById("systemSmartSearch").value.toUpperCase();
+            const sel = document.getElementById("systemStatusSelect").value.toUpperCase();
+            const list = localStorage.getItem(getStorageKey()) ? JSON.parse(localStorage.getItem(getStorageKey())) : [];
+            const filtered = list.filter(item => {
+                const combinedStr = Object.values(item).join(" ").toUpperCase();
+                return combinedStr.includes(txt) && (sel === "" || combinedStr.includes(sel));
+            });
+            populateSystemTable(filtered);
+        }
+        changeTab('BK_Personal');
+    </script>
+</body>
+</html>
