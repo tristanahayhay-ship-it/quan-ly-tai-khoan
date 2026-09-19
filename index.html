@@ -3,64 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Trị Tài Khoản Thông Minh</title>
+    <title>Hệ Thống Quản Trị Tài Khoản Cao Cấp</title>
     <link rel="stylesheet" href="https://jsdelivr.net">
     <link rel="stylesheet" href="https://cloudflare.com">
 </head>
 <body class="bg-gray-900 text-gray-100 font-sans antialiased">
     <div class="flex h-screen overflow-hidden">
-        <!-- SIDEBAR PHÂN CHIA KHU VỰC VẬN HÀNH -->
+        <!-- SIDEBAR PHÂN CHIA HỆ THỐNG MỤC VÍ -->
         <aside class="w-64 bg-gray-950 border-r border-gray-800 p-5 flex flex-col justify-between hidden md:flex">
             <div>
-                <div class="flex items-center gap-3 px-2 py-4 border-b border-gray-800 mb-6">
-                    <span class="text-sm font-black text-white">⚙️ AUTO STATUS ROUTING</span>
+                <div class="flex items-center gap-3 px-2 py-4 border-b border-gray-800 mb-5">
+                    <span class="text-sm font-black text-white tracking-wider">📊 CARD MANAGEMENT</span>
                 </div>
                 <div class="space-y-4">
                     <div>
-                        <p class="px-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Thẻ Đang Chạy (Lên Sàn)</p>
-                        <nav class="space-y-1 flex flex-col font-bold text-xs" id="menuNavActive"></nav>
+                        <p class="px-3 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">4 Mục Ví Chính</p>
+                        <nav class="space-y-1 flex flex-col font-bold text-xs" id="menuNavWallets"></nav>
                     </div>
                     <div>
-                        <p class="px-3 pt-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Kho Lưu Trữ (Hạ Sàn)</p>
-                        <nav class="space-y-1 flex flex-col font-bold text-xs" id="menuNavHistory"></nav>
+                        <p class="px-3 pt-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5">Trung Tâm Điều Phối</p>
+                        <nav class="space-y-1 flex flex-col font-bold text-xs" id="menuNavGlobal"></nav>
                     </div>
                 </div>
             </div>
             <div class="p-3 bg-gray-900/50 rounded-xl border border-gray-800 text-[10px] font-bold text-blue-400 text-center shadow-inner">
-                <i class="fa-solid fa-route mr-1"></i> ĐIỀU HƯỚNG THEO TRẠNG THÁI
+                <i class="fa-solid fa-microchip mr-1"></i> VẬN HÀNH TỰ ĐỘNG KHÔNG SHEET
             </div>
         </aside>
-        <!-- KHÔNG GIAN BẢNG HIỂN THỊ CHÍNH -->
+        <!-- KHÔNG GIAN LÀM VIỆC CHÍNH -->
         <main class="flex-1 flex flex-col h-full bg-gray-900 overflow-y-auto">
             <header class="bg-gray-950 border-b border-gray-800 px-6 py-4 flex justify-between items-center sticky top-0 z-40 shadow-md">
                 <div class="flex items-center gap-2">
                     <h2 class="text-sm font-black text-white uppercase tracking-wider" id="mainHeaderTitle">BK Personal</h2>
-                    <span id="tabTypeBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20">ĐANG CHẠY</span>
                 </div>
                 <div class="flex items-center gap-3">
                     <button id="topBtnAdd" onclick="openInputModal()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black uppercase rounded-lg shadow-md flex items-center gap-1.5"><i class="fa-solid fa-square-plus"></i> Thêm Thẻ</button>
-                    <button onclick="dangerClearTab()" class="px-2 py-2 bg-gray-800 text-gray-400 hover:text-white text-xs font-bold rounded-lg border border-gray-700">Dọn sạch tab</button>
+                    <button onclick="dangerClearTab()" class="px-2 py-2 bg-gray-800 text-gray-400 hover:text-white text-xs font-bold rounded-lg border border-gray-700">Dọn sạch trang</button>
                 </div>
             </header>
             
             <div class="p-6 space-y-4 w-full mx-auto text-xs">
-                <div class="bg-gray-950 border border-gray-800 p-4 rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-3 shadow-inner">
-                    <div class="sm:col-span-2"><input type="text" id="systemSmartSearch" onkeyup="applySystemFilters()" placeholder="🔍 Tìm nhanh nhà thẻ, số thẻ, mốc thời gian..." class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-xl text-white outline-none"></div>
-                    <div><select id="systemStatusSelect" onchange="applySystemFilters()" class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-xl font-bold text-gray-300 outline-none"><option value="">-- Tất cả trạng thái bảng --</option><option value="tắt">🔴 Trạng thái Tắt</option><option value="上架">🟢 Lên sàn (上架)</option><option value="下架">🔴 Hạ sàn (下架)</option></select></div>
+                <!-- KHỐI HỘP BỘ ĐẾM TỔNG SỐ THẺ THEO THỜI GIAN THỰC -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-gray-950 border border-gray-800 p-4 rounded-xl flex items-center justify-between shadow-md">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Bộ đếm tổng số thẻ hiện tại trong mục</p>
+                            <h3 id="widget-visible-count" class="text-xl font-black text-white mt-1">0</h3>
+                        </div>
+                        <div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 text-xs"><i class="fa-solid fa-calculator"></i></div>
+                    </div>
+                    <div class="bg-gray-950 border border-gray-800 p-4 rounded-xl flex items-center justify-between shadow-md">
+                        <div>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Thời gian hệ thống</p>
+                            <h3 class="text-xs font-mono font-bold text-gray-300 mt-2" id="liveClock">00:00:00</h3>
+                        </div>
+                        <div class="w-8 h-8 rounded-lg bg-gray-800 border border-gray-700 flex items-center justify-center text-gray-400 text-xs"><i class="fa-solid fa-clock"></i></div>
+                    </div>
                 </div>
-                <div class="bg-gray-950 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl">
-                    <div class="p-3 bg-gray-900 text-[11px] text-gray-400 flex justify-between font-bold border-b border-gray-800"><span>DANH SÁCH TÀI KHOẢN TRÊN KHÔNG GIAN BẢNG</span><span>Số lượng: <span id="widget-visible-count" class="text-blue-400">0</span> dòng</span></div>
-                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse text-[11px]" id="systemMainTable"><thead><tr class="bg-gray-950 text-gray-400 uppercase text-[10px] font-black border-b border-gray-800 tracking-wider" id="systemTableHeaderRow"></tr></thead><tbody id="systemTableBody" class="divide-y divide-gray-800 font-medium"></tbody></table></div>
+
+                <div class="bg-gray-950 border border-gray-800 p-4 rounded-xl relative">
+                    <input type="text" id="systemSmartSearch" onkeyup="applySystemFilters()" placeholder="🔍 Gõ tìm nhanh nhà thẻ, số thẻ, ghi chú hoặc mốc thời gian..." class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-xl text-white outline-none">
+                </div>
+
+                                <div class="bg-gray-950 border border-gray-800 rounded-2xl overflow-hidden shadow-2xl">
+                    <table class="w-full text-left border-collapse text-[11px]" id="systemMainTable">
+                        <thead><tr class="bg-gray-950 text-gray-400 uppercase text-[10px] font-black border-b border-gray-800 tracking-wider" id="systemTableHeaderRow"></tr></thead>
+                        <tbody id="systemTableBody" class="divide-y divide-gray-800 font-medium"></tbody>
+                    </table>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- POP-UP ĐIỀN THÔNG TIN KHÁCH HÀNG ĐƯA -->
+    <!-- POP-UP ĐIỀN THÔNG TIN THẺ KHI ẤN NÚT -->
     <div id="inputModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="bg-gray-950 border border-gray-800 p-6 rounded-2xl w-full max-w-md shadow-2xl text-xs relative">
             <button onclick="closeInputModal()" class="absolute top-4 right-4 text-gray-500 hover:text-white text-base"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="text-[12px] font-black text-white uppercase mb-4 pb-2 border-b border-gray-800 flex items-center gap-1.5"><i class="fa-solid fa-receipt text-blue-500"></i> Thông tin cần điền lên hệ thống</h3>
+            <h3 class="text-[12px] font-black text-white uppercase mb-4 pb-2 border-b border-gray-800 flex items-center gap-1.5"><i class="fa-solid fa-square-plus text-blue-500"></i> Thông tin cần điền lên hệ thống</h3>
             <form id="systemInputForm" onsubmit="processFormSubmit(event)" class="space-y-3">
                 <div><label class="block font-bold text-gray-400 mb-0.5 uppercase">nhà thẻ</label><input type="text" id="form-ma" required class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-xl text-white font-bold outline-none"></div>
                 <div><label class="block font-bold text-gray-400 mb-0.5 uppercase">số thẻ</label><input type="text" id="form-stk" required class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-xl font-mono text-white outline-none"></div>
@@ -68,7 +87,7 @@
                 <div><label class="block font-bold text-gray-400 mb-0.5 uppercase">mật khẩu</label><input type="text" id="form-matkhau" required class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-xl text-white font-mono outline-none"></div>
                 <div><label class="block font-bold text-gray-400 mb-0.5 uppercase">ghi chú</label><input type="text" id="form-ghichu-extra" class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-xl text-white outline-none"></div>
                 <div><label class="block font-bold text-gray-400 mb-0.5 uppercase">thời gian sử dụng</label><input type="text" id="form-ghichu" class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-xl text-white outline-none"></div>
-                <div><label class="block font-bold text-gray-400 mb-0.5 uppercase">trạng thái mặc định</label><select id="form-trangthai" class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-xl text-white font-bold outline-none"><option value="上架">上架 (Lên sàn)</option><option value="下架 / tắt">下架 / tắt (Hạ sàn)</option></select></div>
+                <div><label class="block font-bold text-gray-400 mb-0.5 uppercase">trạng thái</label><select id="form-trangthai" class="w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-xl text-white font-bold outline-none"><option value="bật">🟢 bật</option><option value="tắt">🔴 tắt</option><option value="đầy hạn mức">🟡 đầy hạn mức</option><option value="xuống thẻ">❌ xuống thẻ</option></select></div>
                 <div class="flex items-center gap-3 pt-2">
                     <button type="button" onclick="closeInputModal()" class="w-1/3 py-2.5 bg-gray-800 text-gray-300 font-bold rounded-xl uppercase">Hủy</button>
                     <button type="submit" class="w-2/3 py-2.5 bg-blue-600 text-white font-black rounded-xl uppercase shadow-md">Lưu liên tục</button>
@@ -76,108 +95,125 @@
             </form>
         </div>
     </div>
-    <div id="toastNotification" class="fixed bottom-5 right-5 px-4 py-3 bg-emerald-600 text-white font-bold text-xs uppercase rounded-xl shadow-2xl transition-all transform translate-y-20 opacity-0 z-50"></div>
+    <div id="toastNotification" class="fixed bottom-5 right-5 px-4 py-3 bg-blue-600 text-white font-bold text-xs uppercase rounded-xl shadow-2xl transition-all transform translate-y-20 opacity-0 z-50"></div>
     <script>
         const modules = [
             { id: 'BK_Personal', name: '💳 BK Personal', service: 'BK Personal' },
-            { id: 'bKash', name: '📱 bKash', service: 'bkash' },
-            { id: 'Nagad', name: '🍊 Nagad', service: 'nagad' },
-            { id: 'Rocket', name: '🚀 Rocket', service: 'rocket' }
+            { id: 'bKash', name: '📱 bkash', service: 'bkash' },
+            { id: 'Nagad', name: '🍊 nagad', service: 'nagad' },
+            { id: 'Rocket', name: '🚀 rocket', service: 'rocket' }
         ];
         
-        let currentWallet = 'BK_Personal';
-        let isHistoryTab = false;         
+        let currentTabMode = 'BK_Personal'; // Lưu mục ví hoặc 'GLOBAL_UP' hoặc 'GLOBAL_DOWN'
 
-        const menuActive = document.getElementById('menuNavActive');
-        const menuHistory = document.getElementById('menuNavHistory');
+        setInterval(() => { document.getElementById('liveClock').innerText = new Date().toLocaleTimeString('vi-VN'); }, 1000);
+        
+        const navWallets = document.getElementById('menuNavWallets');
+        const navGlobal = document.getElementById('menuNavGlobal');
         
         modules.forEach(m => {
-            menuActive.innerHTML += `<button type="button" onclick="switchModule('${m.id}', false)" id="menu-active-${m.id}" class="w-full flex items-center justify-between px-3 py-2 text-left font-bold rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all"><span>${m.name}</span></button>`;
-            menuHistory.innerHTML += `<button type="button" onclick="switchModule('${m.id}', true)" id="menu-history-${m.id}" class="w-full flex items-center justify-between px-3 py-2 text-left font-bold rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all"><span>${m.name} Down</span></button>`;
+            navWallets.innerHTML += `<button type="button" onclick="switchTabMode('${m.id}')" id="menu-${m.id}" class="w-full flex items-center justify-between px-3 py-2.5 text-left font-bold rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all"><span>${m.name}</span></button>`;
         });
+        navGlobal.innerHTML += `<button type="button" onclick="switchTabMode('GLOBAL_UP')" id="menu-GLOBAL_UP" class="w-full flex items-center justify-between px-3 py-2.5 text-left font-bold rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all"><span>🟢 Mục Lên Thẻ (Tổng Hợp)</span></button>`;
+        navGlobal.innerHTML += `<button type="button" onclick="switchTabMode('GLOBAL_DOWN')" id="menu-GLOBAL_DOWN" class="w-full flex items-center justify-between px-3 py-2.5 text-left font-bold rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all"><span>❌ Mục Xuống Thẻ Riêng</span></button>`;
 
-        function switchModule(walletId, isHistory) {
-            currentWallet = walletId;
-            isHistoryTab = isHistory;
+        function switchTabMode(mode) {
+            currentTabMode = mode;
+            document.querySelectorAll('nav button').forEach(b => b.className = "w-full flex items-center justify-between px-3 py-2.5 text-left font-bold rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all");
+            if(document.getElementById('menu-' + mode)) document.getElementById('menu-' + mode).className = "w-full flex items-center justify-between px-3 py-2.5 text-left font-black rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/30 transition-all";
 
-            document.querySelectorAll('nav button').forEach(b => b.className = "w-full flex items-center justify-between px-3 py-2 text-left font-bold rounded-xl text-gray-400 hover:bg-gray-800 hover:text-white transition-all");
-            
-            const activeId = isHistory ? `menu-history-${walletId}` : `menu-active-${walletId}`;
-            if(document.getElementById(activeId)) document.getElementById(activeId).className = "w-full flex items-center justify-between px-3 py-2 text-left font-black rounded-xl bg-blue-600/15 text-blue-400 border border-blue-500/20 transition-all";
+            const h = document.getElementById('systemTableHeaderRow'); const act = '<th class="p-3 text-right">Thao Tác</th>';
+            document.getElementById('topBtnAdd').style.display = (mode === 'GLOBAL_UP' || mode === 'GLOBAL_DOWN') ? 'none' : 'block';
 
-            const meta = modules.find(m => m.id === walletId);
-            document.getElementById('main-header-title').innerText = meta ? (isHistory ? meta.service + " [KHO LƯU TRỮ HẠ SÀN]" : meta.service) : walletId;
-            
-            const badge = document.getElementById('tabTypeBadge');
-            if(isHistory) {
-                badge.innerText = "ĐÃ HẠ SÀN / 下架"; badge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/10 text-red-400 border border-red-500/20";
-                document.getElementById('topBtnAdd').style.display = 'none';
+            if (mode === 'GLOBAL_UP') {
+                document.getElementById('main-header-title').innerText = "MỤC LÊN THẺ (TỔNG HỢP)";
+                h.innerHTML = '<th class="p-3">nhà thẻ</th><th class="p-3">số thẻ</th><th class="p-3">loại ví</th><th class="p-3">hạn mức</th><th class="p-3">mật khẩu</th><th class="p-3">ghi chú</th><th class="p-3">thời gian sử dụng</th><th class="p-3">trạng thái</th><th class="p-3">ngày tháng nạp thẻ</th>' + act;
+            } else if (mode === 'GLOBAL_DOWN') {
+                document.getElementById('main-header-title').innerText = "MỤC XUỐNG THẺ RIÊNG";
+                h.innerHTML = '<th class="p-3">nhà thẻ</th><th class="p-3">số thẻ</th><th class="p-3">loại ví</th><th class="p-3">hạn mức</th><th class="p-3">mật khẩu</th><th class="p-3">ghi chú</th><th class="p-3">thời gian sử dụng</th><th class="p-3">trạng thái</th>' + act;
             } else {
-                badge.innerText = "ĐANG CHẠY / 上架"; badge.className = "px-2 py-0.5 rounded text-[10px] font-bold bg-green-500/10 text-green-400 border border-green-500/20";
-                document.getElementById('topBtnAdd').style.display = 'block';
+                const meta = modules.find(m => m.id === mode);
+                document.getElementById('main-header-title').innerText = meta ? meta.service : mode;
+                // Chuẩn 8 cột theo cấu trúc mẫu ảnh: nhà thẻ -> số thẻ -> tên ví -> hạn mức -> mật khẩu -> ghi chú -> thời gian sử dụng -> trạng thái
+                h.innerHTML = '<th class="p-3">nhà thẻ</th><th class="p-3">số thẻ</th><th class="p-3">' + (meta ? meta.service : 'loại ví') + '</th><th class="p-3">hạn mức</th><th class="p-3">mật khẩu (Sửa)</th><th class="p-3">ghi chú (Sửa)</th><th class="p-3">thời gian sử dụng (Sửa)</th><th class="p-3 w-36">trạng thái</th>' + act;
             }
-
-            const h = document.getElementById('systemTableHeaderRow');
-            let sLabel = meta ? meta.service : 'Dịch vụ';
-            // Bảng chuẩn 8 cột theo yêu cầu thực tế từ mẫu ảnh
-            h.innerHTML = '<th class="p-3">nhà thẻ</th><th class="p-3">số thẻ</th><th class="p-3">' + sLabel + '</th><th class="p-3">hạn mức</th><th class="p-3">mật khẩu</th><th class="p-3">ghi chú</th><th class="p-3">thời gian sử dụng</th><th class="p-3 w-40">trạng thái (Tùy Chỉnh)</th><th class="p-3 text-right">Thao Tác</th>';
-            
-            loadLocalData();
+            loadSystemData();
         }
 
-        function getStorageKey(isHistory) { return (isHistory ? 'db_down_' : 'db_up_') + currentWallet; }
-        function loadLocalData() { populateSystemTable(localStorage.getItem(getStorageKey(isHistoryTab)) ? JSON.parse(localStorage.getItem(getStorageKey(isHistoryTab))) : []); }
-        function populateSystemTable(list) {
+        function getStorageKey() { return 'core_standalone_db_v6'; }
+        function loadSystemData() {
+            const raw = localStorage.getItem(getStorageKey());
+            const allData = raw ? JSON.parse(raw) : [];
+            populateSystemTable(allData);
+        }
+        function populateSystemTable(allList) {
             const tbody = document.getElementById('systemTableBody'); tbody.innerHTML = '';
-            document.getElementById('widget-visible-count').innerText = list.length;
-            if (list.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" class="p-10 text-center text-gray-500 font-bold bg-gray-950/10">Trang mục hiện tại đang trống dữ liệu.</td></tr>';
+            
+            // Bộ lọc phân loại thông minh theo đúng workflow cấu trúc của bạn
+            let filteredList = allList.filter(item => {
+                if (currentTabMode === 'GLOBAL_UP') return item.trangthai !== 'xuống thẻ';
+                if (currentTabMode === 'GLOBAL_DOWN') return item.trangthai === 'xuống thẻ';
+                return item.viloai === currentTabMode && item.trangthai !== 'xuống thẻ';
+            });
+
+            document.getElementById('widget-visible-count').innerText = filteredList.length;
+            if (filteredList.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" class="p-10 text-center text-gray-500 font-bold">Trang trống dữ liệu.</td></tr>';
                 return;
             }
-            list.forEach((item, index) => {
-                const tr = document.createElement('tr'); tr.className = "hover:bg-gray-800 border-b border-gray-800 text-gray-300 text-xs";
-                const actBtn = `<td class="p-3 text-right"><button type="button" onclick="deleteRecordByIndex(${index})" class="px-2 py-0.5 bg-red-950/40 text-red-400 hover:bg-red-600 hover:text-white rounded text-[10px]">Xóa hẳn</button></td>`;
-                let sLabel = modules.find(m => m.id === currentWallet)?.service || '';
 
-                // KHỐI MENU THẢ XUỐNG TỰ ĐỘNG ĐIỀU HƯỚNG WORKFLOW KHI CLICK CHỌN
-                const statusSelectHtml = `
-                    <select onchange="handleLiveStatusRouting(${index}, this.value)" class="bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 font-bold text-xs text-white focus:border-blue-500 outline-none">
-                        <option value="上架" ${item.trangthai === '上架' ? 'selected' : ''}>🟢 上架 (Lên sàn)</option>
-                        <option value="下架 / tắt" ${item.trangthai !== '上架' ? 'selected' : ''}>🔴 下架 / tắt (Hạ sàn)</option>
+            filteredList.forEach((item) => {
+                const tr = document.createElement('tr'); tr.className = "hover:bg-gray-800 border-b border-gray-800 text-gray-300 text-xs";
+                const actBtn = `<td class="p-3 text-right"><button type="button" onclick="deleteGlobalCard('${item.uid}')" class="px-2 py-0.5 bg-red-950/40 text-red-400 hover:bg-red-600 hover:text-white rounded text-[10px]">Xóa hẳn</button></td>`;
+                
+                let badge = "bg-gray-800 text-gray-400 text-[10px]";
+                if (item.trangthai === 'bật') badge = "bg-green-500/10 text-green-400 border border-green-500/20 font-bold";
+                if (item.trangthai === 'tắt') badge = "bg-red-500/10 text-red-400 border border-red-500/20";
+                if (item.trangthai === 'đầy hạn mức') badge = "bg-amber-500/10 text-amber-400 border border-amber-500/20";
+
+                const walletMeta = modules.find(m => m.id === item.viloai);
+                let serviceLabel = walletMeta ? walletMeta.service : item.viloai;
+
+                // MENU CHỌN TRẠNG THÁI GỒM 4 MỤC CHUẨN ĐÚNG WORKFLOW
+                const statusDropdownHtml = `
+                    <select onchange="updateLiveField('${item.uid}', 'trangthai', this.value)" class="bg-gray-900 border border-gray-700 rounded-lg px-2 py-1 font-bold text-xs text-white outline-none">
+                        <option value="bật" ${item.trangthai==='bật'?'selected':''}>🟢 bật</option>
+                        <option value="tắt" ${item.trangthai==='tắt'?'selected':''}>🔴 tắt</option>
+                        <option value="đầy hạn mức" ${item.trangthai==='đầy hạn mức'?'selected':''}>🟡 đầy hạn mức</option>
+                        <option value="xuống thẻ" ${item.trangthai==='xuống thẻ'?'selected':''}>❌ xuống thẻ</option>
                     </select>`;
 
-                tr.innerHTML = `<td class="p-3 font-bold text-white">${item.ma}</td><td class="p-3 font-mono text-blue-400 font-bold">${item.stk}</td><td class="p-3 text-gray-500">${sLabel}</td>` +
-                               `<td class="p-3 text-amber-500 font-black">${item.soluong}</td><td class="p-3 font-mono">${item.matkhau}</td><td class="p-3 text-gray-400">${item.ghichuextra}</td>` +
-                               `<td class="p-3 text-gray-400">${item.ghichu}</td><td class="p-3">${statusSelectHtml}</td>` + actBtn;
+                if (currentTabMode === 'GLOBAL_UP') {
+                    // Hiện ngày tháng thời gian ở hàng cuối cùng tự động
+                    tr.innerHTML = `<td class="p-3 font-bold text-white">${item.ma}</td><td class="p-3 font-mono text-blue-400 font-bold">${item.stk}</td><td class="p-3 text-gray-500 font-bold">${serviceLabel}</td><td class="p-3 text-amber-500 font-bold">${item.soluong}</td><td class="p-3 font-mono">${item.matkhau}</td><td class="p-3 text-gray-400">${item.ghichuextra}</td><td class="p-3 text-gray-400">${item.ghichu}</td><td class="p-3"><span class="px-2 py-0.5 rounded ${badge}">${item.trangthai}</span></td><td class="p-3 text-blue-400 font-mono font-bold">${item.timestamp}</td>` + actBtn;
+                } else if (currentActiveModule === 'GLOBAL_DOWN') {
+                    tr.innerHTML = `<td class="p-3 font-bold text-white">${item.ma}</td><td class="p-3 font-mono text-blue-400 font-bold">${item.stk}</td><td class="p-3 text-gray-500 font-bold">${serviceLabel}</td><td class="p-3 text-amber-500 font-bold">${item.soluong}</td><td class="p-3 font-mono">${item.matkhau}</td><td class="p-3 text-gray-400">${item.ghichuextra}</td><td class="p-3 text-gray-400">${item.ghichu}</td><td class="p-3"><span class="px-2 py-0.5 bg-red-600 text-white rounded font-bold text-[10px]">❌ xuống thẻ</span></td>` + actBtn;
+                } else {
+                    // TÍNH NĂNG CHỈNH SỬA TÙY Ý MẬT KHẨU, GHI CHÚ, THỜI GIAN SỬ DỤNG TRỰC TIẾP (contenteditable)
+                    tr.innerHTML = `<td class="p-3 font-bold text-white">${item.ma}</td>` +
+                                   `<td class="p-3 font-mono text-blue-400 font-bold">${item.stk}</td>` +
+                                   `<td class="p-3 text-gray-500 font-bold">${serviceLabel}</td>` +
+                                   `<td class="p-3 text-amber-500 font-black">${item.soluong}</td>` +
+                                   `<td class="p-3 font-mono bg-gray-950/20 focus:bg-slate-800 outline-none border-b border-transparent focus:border-blue-500" contenteditable="true" onblur="updateLiveField('${item.uid}', 'matkhau', this.innerText)">${item.matkhau}</td>` +
+                                   `<td class="p-3 text-gray-300 focus:bg-slate-800 outline-none border-b border-transparent focus:border-blue-500" contenteditable="true" onblur="updateLiveField('${item.uid}', 'ghichuextra', this.innerText)">${item.ghichuextra}</td>` +
+                                   `<td class="p-3 text-gray-300 focus:bg-slate-800 outline-none border-b border-transparent focus:border-blue-500" contenteditable="true" onblur="updateLiveField('${item.uid}', 'ghichu', this.innerText)">${item.ghichu}</td>` +
+                                   `<td class="p-3">${statusSelectHtml}</td>` + actBtn;
+                }
                 tbody.appendChild(tr);
             });
         }
 
-        // TÍNH NĂNG ĐỈNH CAO: TỰ ĐỘNG NHẢY MỤC KHI ĐỔI TRẠNG THÁI TRÊN DÒNG TÙY CHỈNH
-        function handleLiveStatusRouting(index, newStatus) {
-            const targetIsHistory = (newStatus !== '上架');
-            
-            // Nếu người dùng chọn trạng thái trùng khớp với tab đang xem thì không dịch chuyển
-            if (targetIsHistory === isHistoryTab) return;
-
-            let sourceKey = getStorageKey(isHistoryTab);
-            let targetKey = getStorageKey(targetIsHistory);
-            
-            let sourceList = JSON.parse(localStorage.getItem(sourceKey)) || [];
-            let targetList = JSON.parse(localStorage.getItem(targetKey)) || [];
-            
-            // Cắt dòng dữ liệu cũ ra khỏi mảng
-            let item = sourceList.splice(index, 1)[0];
-            item.trangthai = newStatus; // Gán trạng thái mới chỉnh
-            
-            // Đẩy sang mảng bên kia
-            targetList.unshift(item);
-            
-            localStorage.setItem(sourceKey, JSON.stringify(sourceList));
-            localStorage.setItem(targetKey, JSON.stringify(targetList));
-            
-            loadLocalData(); // Vẽ lại bảng ngay lập tức
-            showToast(targetIsHistory ? '🔴 Thẻ đã tự động nhảy xuống Kho Lưu Trữ (Down)!' : '🟢 Thẻ đã tự động quay trở lại phần Đang Chạy!');
+        // TÍNH NĂNG CẬP NHẬT TRỰC TIẾP VÀ TỰ ĐỘNG NHẢY MỤC VÍ KHI ĐỔI TRẠNG THÁI THÀNH XUỐNG THẺ
+        function updateLiveField(uid, fieldName, newValue) {
+            let raw = localStorage.getItem(getStorageKey()); let list = raw ? JSON.parse(raw) : [];
+            let item = list.find(i => i.uid === uid);
+            if(item) {
+                item[fieldName] = newValue.trim(); localStorage.setItem(getStorageKey(), JSON.stringify(list));
+                if (fieldName === 'trangthai') {
+                    switchTabMode(currentTabMode); // Tự động kích hoạt workflow nhảy dòng biến mất sang mục Xuống thẻ
+                    showToast(newValue === 'xuống thẻ' ? '❌ Thẻ đã tự nhảy sang mục Xuống Thẻ Riêng!' : '⚙️ Đã đồng bộ trạng thái mới!');
+                } else { showToast('📝 Đã tự động lưu thay đổi chỉnh sửa!'); }
+            }
         }
 
         function openInputModal() { document.getElementById('inputModal').classList.remove('hidden'); }
@@ -185,42 +221,46 @@
 
         function processFormSubmit(event) {
             event.preventDefault();
-            const statusVal = document.getElementById('form-trangthai').value;
-            const targetIsHistory = (statusVal !== '上架');
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('vi-VN') + ' ' + now.toLocaleTimeString('vi-VN'); // Tạo mốc ngày tháng tự động
 
             const newItem = {
+                uid: 'card_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), viloai: currentTabMode,
                 ma: document.getElementById('form-ma').value, stk: document.getElementById('form-stk').value,
                 soluong: document.getElementById('form-soluong').value, matkhau: document.getElementById('form-matkhau').value,
                 ghichuextra: document.getElementById('form-ghichu-extra').value || '-', ghichu: document.getElementById('form-ghichu').value || '-',
-                trangthai: statusVal
+                trangthai: document.getElementById('form-trangthai').value, timestamp: dateStr
             };
             
-            let list = JSON.parse(localStorage.getItem(getStorageKey(targetIsHistory))) || [];
-            list.unshift(newItem); localStorage.setItem(getStorageKey(targetIsHistory), JSON.stringify(list));
+            let raw = localStorage.getItem(getStorageKey()); let list = raw ? JSON.parse(raw) : [];
+            list.unshift(newItem); localStorage.setItem(getStorageKey(), JSON.stringify(list));
             
             document.getElementById('form-ma').value = ''; document.getElementById('form-stk').value = '';
             document.getElementById('form-soluong').value = ''; document.getElementById('form-matkhau').value = '';
             
-            switchModule(currentWallet, isHistoryTab);
-            showToast('🚀 Hệ thống: Đã nạp và định tuyến dữ liệu thành công!');
+            switchTabMode(currentTabMode);
+            showToast('🚀 Đã ghi nhận nạp thẻ thành công!');
         }
 
-        function deleteRecordByIndex(index) {
-            if(!confirm('⚠️ Xác nhận xóa bỏ vĩnh viễn dòng này khỏi máy?')) return;
-            let list = JSON.parse(localStorage.getItem(getStorageKey(isHistoryTab))); list.splice(index, 1);
-            localStorage.setItem(getStorageKey(isHistoryTab), JSON.stringify(list)); loadLocalData();
-            showToast('🗑️ Hệ thống: Đã xóa bản ghi!');
+        function deleteGlobalCard(uid) {
+            if(!confirm('⚠️ Xác nhận xóa hẳn thẻ này ra khỏi bộ nhớ máy?')) return;
+            let raw = localStorage.getItem(getStorageKey()); let list = raw ? JSON.parse(raw) : [];
+            list = list.filter(i => i.uid !== uid); localStorage.setItem(getStorageKey(), JSON.stringify(list));
+            switchTabMode(currentTabMode); showToast('🗑️ Đã xóa bản ghi!');
         }
 
         function dangerClearTab() {
-            if(!confirm('Xóa sạch toàn bộ dữ liệu của phân hệ này?')) return;
-            localStorage.removeItem(getStorageKey(isHistoryTab)); loadLocalData();
+            if(!confirm('Xóa sạch dữ liệu của phân hệ này?')) return;
+            let raw = localStorage.getItem(getStorageKey()); let list = raw ? JSON.parse(raw) : [];
+            if(currentTabMode==='GLOBAL_UP'||currentTabMode==='GLOBAL_DOWN') { localStorage.removeItem(getStorageKey()); }
+            else { list = list.filter(i => i.viloai !== currentTabMode); localStorage.setItem(getStorageKey(), JSON.stringify(list)); }
+            switchTabMode(currentTabMode);
         }
 
         function applySystemFilters() {
             const txt = document.getElementById("systemSmartSearch").value.toUpperCase();
             const sel = document.getElementById("systemStatusSelect").value.toUpperCase();
-            const list = localStorage.getItem(getStorageKey(isHistoryTab)) ? JSON.parse(localStorage.getItem(getStorageKey(isHistoryTab))) : [];
+            const raw = localStorage.getItem(getStorageKey()); const list = raw ? JSON.parse(raw) : [];
             const filtered = list.filter(item => {
                 const combinedStr = Object.values(item).join(" ").toUpperCase();
                 return combinedStr.includes(txt) && (sel === "" || combinedStr.includes(sel));
@@ -229,12 +269,16 @@
         }
 
         function showToast(msg) {
-            const t = document.getElementById('toastNotification'); t.innerText = msg;
-            t.className = "fixed bottom-5 right-5 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-xs uppercase rounded-xl shadow-2xl transition-all transform translate-y-0 opacity-100 z-50";
-            setTimeout(() => { t.className = "fixed bottom-5 right-5 px-4 py-3 bg-gray-800 text-white font-bold text-xs uppercase rounded-xl shadow-2xl transition-all transform translate-y-20 opacity-0 z-50"; }, 3000);
+            const t = document.getElementById('toastNotification');
+            t.innerText = msg;
+            t.className = "fixed bottom-5 right-5 px-4 py-3 bg-blue-600 text-white font-bold text-xs uppercase rounded-xl shadow-2xl transition-all transform translate-y-0 opacity-100 z-50";
+            setTimeout(function() {
+                t.className = "fixed bottom-5 right-5 px-4 py-3 bg-blue-600 text-white font-bold text-xs uppercase rounded-xl shadow-2xl transition-all transform translate-y-20 opacity-0 z-50";
+            }, 2000);
         }
 
-        switchModule('BK_Personal', false);
+        // Kích hoạt khởi động hệ thống tại mục ví đầu tiên
+        switchTabMode('BK_Personal');
     </script>
 </body>
 </html>
