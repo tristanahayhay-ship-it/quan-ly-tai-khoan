@@ -1,0 +1,48 @@
+function doGet(e) {
+  var sheetName = e.parameter.tab;
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(sheetName);
+  if (!sheet) return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+  var data = sheet.getDataRange().getValues();
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var sheetName = data.tab;
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName(sheetName) || ss.insertSheet(sheetName);
+    
+    if (data.action === "add") {
+      if (sheetName === "BK Personal" || sheetName === "风控卡 (Không lấy tiền)") {
+        sheet.appendRow([data.ma, data.stk, data.dichvu, data.soluong, data.trangthai, data.ghichu]);
+      } else if (sheetName === "扣钱卡商 (盗刷、下架...) ") {
+        sheet.appendRow([data.ma, data.stk, data.dichvu, data.soluong, data.trangthai, Utilities.formatDate(new Date(), "GMT+7", "dd-MM-yyyy"), data.ghichu]);
+      } else if (sheetName === "记录卡商账户") {
+        var targetCol = 2, lastRow = sheet.getLastRow();
+        var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues();
+        for (var j = 1; j < headers.length; j++) {
+          if (headers[j] == data.trangthai) { targetCol = j + 1; break; }
+        }
+        var targetRow = -1, codes = sheet.getRange(1, 1, lastRow, 1).getValues();
+        for (var i = 0; i < codes.length; i++) {
+          if (codes[i].toString().trim() === data.ma.toString().trim()) { targetRow = i + 1; break; }
+        }
+        if (targetRow === -1) { sheet.appendRow([data.ma]); targetRow = sheet.getLastRow(); }
+        sheet.getRange(targetRow, targetCol).setValue(data.stk);
+        sheet.getRange(targetRow, targetCol + 1).setValue(data.ghichu);
+      } else {
+        sheet.appendRow([data.ma, data.stk, data.dichvu, data.soluong, data.matkhau, data.trangthai, data.ghichu]);
+      }
+      return ContentService.createTextOutput(JSON.stringify({"status":"success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    if (data.action === "delete") {
+      sheet.deleteRow(parseInt(data.rowIdx));
+      return ContentService.createTextOutput(JSON.stringify({"status":"success"})).setMimeType(ContentService.MimeType.JSON);
+    }
+  } catch(error) {
+    return ContentService.createTextOutput(JSON.stringify({"status":"error", "message":error.toString()})).setMimeType(ContentService.MimeType.JSON);
+  }
+}
