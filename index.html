@@ -300,7 +300,8 @@
         const app = {
             spreadsheet: null,
             selectedFile: { base64: null, mimeType: null, name: null },
-            isProcessing: false
+            isProcessing: false,
+            selectedModel: null
         };
 
         function addChatMessage(text, type = 'bot', status = 'normal') {
@@ -402,6 +403,47 @@
             reader.readAsDataURL(file);
         });
 
+        async function getAvailableGeminiModels(apiKey) {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+            const response = await fetch(url, { method: 'GET' });
+            if (!response.ok) {
+                const body = await response.json().catch(() => ({}));
+                throw new Error(body.error?.message || `HTTP ${response.status}`);
+            }
+            const data = await response.json();
+            const models = Array.isArray(data.models) ? data.models : [];
+            return models
+                .map(m => ({ name: m.name, methods: m.supportedGenerationMethods || [] }))
+                .filter(m => m.methods.includes('generateContent'))
+                .map(m => m.name.replace(/^models\//, ''));
+        }
+
+        async function resolveGeminiModel(apiKey) {
+            const preferred = [
+                'gemini-3.8-flash',
+                'gemini-3.7-flash',
+                'gemini-3.6-flash',
+                'gemini-3.5-flash',
+                'gemini-2.5-flash',
+                'gemini-2.5-pro',
+                'gemini-2.0-flash',
+                'gemini-1.5-pro',
+                'gemini-1.5-flash'
+            ];
+
+            const available = await getAvailableGeminiModels(apiKey);
+            console.log('Available Gemini models:', available);
+
+            if (!available.length) {
+                throw new Error('API Key hợp lệ nhưng không có model nào hỗ trợ generateContent trong tài khoản của bạn. Vui lòng kiểm tra quyền truy cập Gemini API.');
+            }
+
+            const found = preferred.find(model => available.includes(model));
+            if (found) return found;
+
+            return available[0];
+        }
+
         async function sendToGemini() {
             const apiKey = document.getElementById('apiKeyInput').value.trim();
             const userInput = document.getElementById('userInput');
@@ -425,6 +467,9 @@
                 if (app.selectedFile.base64) addImageToLastMessage(app.selectedFile.base64, app.selectedFile.mimeType);
 
                 const processingMsg = addChatMessage('⏳ Robot đang xử lý...', 'bot');
+
+                app.selectedModel = await resolveGeminiModel(apiKey);
+                console.log('Selected Gemini model:', app.selectedModel);
 
                 const systemPrompt = `Bạn là trợ lý AI chuyên biệt điền dữ liệu vào bảng tính Excel.
 
@@ -450,7 +495,7 @@ QUY TẮC:
                     });
                 }
 
-                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
+                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${app.selectedModel}:generateContent?key=${apiKey}`;
                 console.log('Calling Gemini endpoint:', endpoint);
 
                 const response = await fetch(endpoint, {
@@ -466,7 +511,7 @@ QUY TẮC:
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
+                    const errorData = await response.json().catch(() => ({}));
                     throw new Error(errorData.error?.message || `HTTP ${response.status}`);
                 }
 
