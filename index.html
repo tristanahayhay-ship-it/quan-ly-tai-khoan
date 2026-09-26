@@ -3,14 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Super Excel Edition</title>
-    
-    <!-- Nhúng bộ công cụ tính toán & Grid Excel mượt mà nhất -->
-    <script src="https://jquery.com"></script>
+    <title>AI Co-Pilot Spreadsheet - Cả Người & Robot Sửa Bảng</title>
     <script src="https://jsdelivr.net"></script>
-    <link rel="stylesheet" href="https://jsdelivr.net" type="text/css" />
-    <script src="https://cloudflare.com"></script>
-
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { display: flex; flex-direction: column; height: 100vh; background-color: #f4f6f9; color: #333; }
@@ -28,39 +22,44 @@
         .file-info { font-size: 12px; color: #0078d4; background: #e6f4ff; padding: 6px; border-radius: 4px; margin-top: 5px; font-weight: 500; display: none; }
         .input-group { background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #e0e0e0; margin-bottom: 8px; }
         textarea { width: 100%; height: 65px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: none; margin-bottom: 8px; font-size: 14px; }
-        .btn-row { display: flex; gap: 6px; margin-bottom: 8px; }
-        button { background: #107c41; color: white; border: none; padding: 10px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; }
+        .btn-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+        button { background: #107c41; color: white; border: none; padding: 10px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; transition: background 0.2s; font-size: 13px; }
         button:hover { background: #0b592e; }
-        .btn-send { flex: 1; }
+        .btn-send { flex: 1; min-width: 80px; }
         .btn-media { background: #6c757d; }
-        .btn-export { background: #0078d4; width: 100%; padding: 12px; font-size: 14px; }
-        .content { flex: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; background: #fff; }
-        .excel-outer { flex: 1; overflow: auto; border: 1px solid #ccc; border-radius: 4px; padding: 10px; background: #fff; }
+        .btn-media:hover { background: #5a6268; }
+        .btn-export { background: #0078d4; width: 100%; font-size: 14px; padding: 12px; }
+        .btn-export:hover { background: #005a9e; }
+        .content { flex: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; }
+        .table-toolbar { display: flex; gap: 10px; margin-bottom: 10px; }
+        .btn-tool { background: #f3f3f3; color: #333; border: 1px solid #ccc; font-size: 12px; padding: 6px 12px; font-weight: normal; }
+        .btn-tool:hover { background: #e1e1e1; }
+        .table-container { flex: 1; background: white; border: 1px solid #d0d0d0; border-radius: 4px; overflow: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        table { border-collapse: collapse; min-width: 100%; font-size: 14px; }
+        th, td { border: 1px solid #d0d0d0; padding: 6px 10px; text-align: left; min-width: 110px; outline: none; }
+        th { background-color: #f3f3f3; font-weight: 600; position: sticky; top: 0; z-index: 10; color: #444; }
+        td:focus { background-color: #e8f5e9; border: 2px solid #107c41; padding: 5px 9px; }
         .loading { display: none; text-align: center; color: #666; font-size: 13px; margin-bottom: 8px; font-style: italic; }
-        /* Tối ưu giao diện bảng Excel */
-        .jexcel { border-collapse: collapse; }
-        .jexcel td, .jexcel_label { border: 1px solid #ccc !important; padding: 6px 10px !important; }
     </style>
 </head>
 <body>
 <header>
-    <h2>📊 AI Super Excel Edition</h2>
+    <h2>📊 AI Co-Pilot Spreadsheet (Editable)</h2>
     <div class="config-area">
         <label for="apiKey">OpenAI API Key:</label>
         <input type="password" id="apiKey" placeholder="sk-..." />
     </div>
 </header>
-
 <div class="main-container">
     <div class="sidebar">
-        <h3>💬 Trợ lý AI Bảng Tính</h3>
-        <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Cả người và Robot cùng sửa chung bảng. Copy-paste, sửa tay thoải mái.</p>
+        <h3>💬 Ra lệnh cho AI</h3>
+        <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Bạn có thể gõ trực tiếp vào bảng hoặc dán dữ liệu Excel (Ctrl+V) vào ô bất kỳ.</p>
         <div class="chat-history" id="chatHistory">
-            <div class="msg ai">Sếp ơi, em đã cập nhật lại nhân nhúng Excel siêu mượt. Sếp kiểm tra lưới ô bên phải và dán thử dữ liệu nhé!</div>
+            <div class="msg ai">Sếp thích tự tay sửa hay bảo em làm đều được nhé! Hãy click đúp vào ô để sửa, dán bảng Excel bằng Ctrl+V hoặc gõ lệnh cho em ở dưới.</div>
         </div>
         
         <div class="input-group">
-            <textarea id="promptInput" placeholder="Nhập câu lệnh cho AI..."></textarea>
+            <textarea id="promptInput" placeholder="Bảo AI xử lý bảng tính hiện tại..."></textarea>
             <input type="file" id="imageInput" accept="image/*" style="display: none;">
             <input type="file" id="fileInput" accept=".xlsx, .xls, .csv, .txt" style="display: none;">
             <div class="btn-row">
@@ -72,14 +71,26 @@
             <div id="fileInfoBox" class="file-info"></div>
         </div>
         
-        <div class="loading" id="loadingState">AI đang phân tích và xử lý bảng tính...</div>
+        <div class="loading" id="loadingState">AI đang phân tích bảng và xử lý...</div>
         <button class="btn-export" id="btnExport">📥 Xuất file Excel (.xlsx)</button>
     </div>
 
     <div class="content">
-        <div class="excel-outer">
-            <!-- Trình duyệt sẽ tự động vẽ lưới ô Excel vào thẻ này -->
-            <div id="mytable"></div>
+        <div class="table-toolbar">
+            <button class="btn-tool" id="btnAddRow">➕ Thêm 1 Hàng</button>
+            <button class="btn-tool" id="btnAddCol">➕ Thêm 1 Cột</button>
+            <button class="btn-tool" id="btnClearTable" style="color: #c62828;">🧹 Xóa Trống Bảng</button>
+        </div>
+        <div class="table-container">
+            <table id="spreadsheet">
+                <thead><tr><th contenteditable="true">Cột 1</th><th contenteditable="true">Cột 2</th><th contenteditable="true">Cột 3</th><th contenteditable="true">Cột 4</th></tr></thead>
+                <tbody>
+                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -91,35 +102,11 @@
     let base64Image = "";
     let extractedFileText = "";
 
-    // Hàm tạo lập giao diện Excel thực tế
-    function initExcelGrid(headers, rowsData) {
-        // Cấu hình độ rộng cho từng cột tự động
-        const colWidths = headers.map(() => 120);
-        
-        \$('#mytable').html(''); // Xóa bảng cũ
-        \$('#mytable').jexcel({
-            data: rowsData,
-            colHeaders: headers,
-            colWidths: colWidths,
-            minDimensions: [headers.length, Math.max(rowsData.length, 25)]
-        });
-    }
-
-    // Tự động sinh ra 1 bảng Excel trống 10 cột, 25 hàng ngay khi mở trang web
-    const defaultHeaders = ["Cột A", "Cột B", "Cột C", "Cột D", "Cột E", "Cột F", "Cột G", "Cột H", "Cột I", "Cột J"];
-    const defaultRows = Array(25).fill(0).map(() => Array(10).fill(""));
-    
-    // Kích hoạt bảng lưới đầu tiên
-    \$(document).ready(function() {
-        initExcelGrid(defaultHeaders, defaultRows);
-    });
-
-    // Các tính năng xử lý tải ảnh và file đính kèm
     document.getElementById('btnSelectImage').addEventListener('click', () => document.getElementById('imageInput').click());
     document.getElementById('btnSelectFile').addEventListener('click', () => document.getElementById('fileInput').click());
     
     document.getElementById('imageInput').addEventListener('change', function(e) {
-        const file = e.target.files[0]; if (!file) return;
+        const file = e.target.files; if (!file) return;
         const reader = new FileReader();
         reader.onload = function(evt) {
             base64Image = evt.target.result;
@@ -131,7 +118,7 @@
     });
 
     document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0]; if (!file) return;
+        const file = e.target.files; if (!file) return;
         document.getElementById('fileInfoBox').innerText = `📄 Đang đính kèm: ${file.name}`;
         document.getElementById('fileInfoBox').style.display = 'block';
         document.getElementById('imgPreview').style.display = 'none'; base64Image = "";
@@ -142,47 +129,129 @@
             reader.onload = function(evt) {
                 const data = new Uint8Array(evt.target.result);
                 const wb = XLSX.read(data, {type: 'array'});
-                const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1});
-                extractedFileText = "Dữ liệu đính kèm file Excel:\n" + JSON.stringify(json);
+                const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames], {header: 1});
+                extractedFileText = "Dữ liệu đính kèm từ file Excel:\n" + JSON.stringify(json);
             };
             reader.readAsArrayBuffer(file);
         } else {
-            reader.onload = function(evt) { extractedFileText = "Dữ liệu file:\n" + evt.target.result; };
+            reader.onload = function(evt) { extractedFileText = "Dữ liệu file văn bản:\n" + evt.target.result; };
             reader.readAsText(file);
         }
     });
-
-    // Trích xuất dữ liệu thực tế trên màn hình người dùng đang sửa
-    function getGridDataFromScreen() {
-        const headers = \$('#mytable').jexcel('getHeaders', true);
-        const rows = \$('#mytable').jexcel('getData');
+    function getCurrentTableDataFromUI() {
+        const table = document.getElementById('spreadsheet');
+        const headers = [];
+        table.querySelectorAll('thead th').forEach(th => headers.push(th.innerText.trim()));
+        
+        const rows = [];
+        table.querySelectorAll('tbody tr').forEach(tr => {
+            const rowData = [];
+            tr.querySelectorAll('td').forEach(td => rowData.push(td.innerText.trim()));
+            rows.push(rowData);
+        });
         return { headers, rows };
     }
 
-    // Kết nối Robot AI
+    function renderTable(data) {
+        const table = document.getElementById('spreadsheet');
+        table.innerHTML = '';
+        
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        data.headers.forEach(h => {
+            const th = document.createElement('th'); th.setAttribute('contenteditable', 'true');
+            th.innerText = h; headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow); table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        data.rows.forEach(r => {
+            const row = document.createElement('tr');
+            r.forEach(cell => {
+                const td = document.createElement('td'); td.setAttribute('contenteditable', 'true');
+                td.innerText = cell ?? ''; row.appendChild(td);
+            });
+            tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+    }
+
+    document.getElementById('spreadsheet').addEventListener('paste', function(e) {
+        e.preventDefault();
+        const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+        const rows = text.split('\n').map(row => row.split('\t'));
+        
+        const targetTd = e.target;
+        if (targetTd.tagName !== 'TD') return;
+        
+        const targetTr = targetTd.parentNode;
+        const startRowIdx = Array.from(targetTr.parentNode.children).indexOf(targetTr);
+        const startColIdx = Array.from(targetTr.children).indexOf(targetTd);
+        const tbody = targetTr.parentNode;
+        
+        rows.forEach((row, rOffset) => {
+            if (!row.join('').trim()) return;
+            let currentTr = tbody.children[startRowIdx + rOffset];
+            if (!currentTr) {
+                currentTr = document.createElement('tr');
+                const colCount = tbody.parentNode.querySelectorAll('thead th').length;
+                for(let i=0; i<colCount; i++) {
+                    const td = document.createElement('td'); td.setAttribute('contenteditable', 'true');
+                    currentTr.appendChild(td);
+                }
+                tbody.appendChild(currentTr);
+            }
+            row.forEach((cellValue, cOffset) => {
+                const currentTd = currentTr.children[startColIdx + cOffset];
+                if (currentTd) currentTd.innerText = cellValue.trim();
+            });
+        });
+    });
+    document.getElementById('btnAddRow').addEventListener('click', () => {
+        const tbody = document.querySelector('#spreadsheet tbody');
+        const colCount = document.querySelectorAll('#spreadsheet thead th').length || 4;
+        const tr = document.createElement('tr');
+        for(let i=0; i<colCount; i++) {
+            const td = document.createElement('td'); td.setAttribute('contenteditable', 'true'); tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('btnAddCol').addEventListener('click', () => {
+        const th = document.createElement('th'); th.setAttribute('contenteditable', 'true');
+        th.innerText = `Cột ${document.querySelectorAll('#spreadsheet thead th').length + 1}`;
+        document.querySelector('#spreadsheet thead tr').appendChild(th);
+        
+        document.querySelectorAll('#spreadsheet tbody tr').forEach(tr => {
+            const td = document.createElement('td'); td.setAttribute('contenteditable', 'true'); tr.appendChild(td);
+        });
+    });
+
+    document.getElementById('btnClearTable').addEventListener('click', () => {
+        renderTable({ headers: ["Cột 1", "Cột 2", "Cột 3", "Cột 4"], rows: [["","","",""],["","","",""]] });
+    });
+
     document.getElementById('btnSend').addEventListener('click', async () => {
         const prompt = document.getElementById('promptInput').value.trim();
         const apiKey = apiKeyInput.value.trim();
         if (!apiKey) return alert('Vui lòng nhập OpenAI API Key!');
 
-        const tableState = getGridDataFromScreen();
-        const filteredRows = tableState.rows.filter(r => r.join('').trim() !== "");
-        const minimalTableState = { headers: tableState.headers, rows: filteredRows.length > 0 ? filteredRows : [[""]] };
-
-        addMessage(prompt || "Yêu cầu AI xử lý dữ liệu.", 'user');
+        const tableState = getCurrentTableDataFromUI();
+        addMessage(prompt || "Yêu cầu AI phân tích dữ liệu bảng hiện tại.", 'user');
+        
         document.getElementById('promptInput').value = '';
         document.getElementById('imgPreview').style.display = 'none';
         document.getElementById('fileInfoBox').style.display = 'none';
         document.getElementById('loadingState').style.display = 'block';
 
-        const systemInstruction = `You are an AI data assistant. Analyze the user's table data and update it based on the prompt. You must return ONLY a raw valid JSON object. No chat, no markdown blocks. 
-Current Screen Sheet Data: ${JSON.stringify(minimalTableState)}.
+        const systemInstruction = `You are an AI data assistant. Analyze the user's current table data and apply their modifications. You must return ONLY a raw valid JSON object replacing/updating the spreadsheet. No chat, no markdown format blocks.
+Current Table Data on screen: ${JSON.stringify(tableState)}.
 Output JSON schema: {"headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]]}`;
 
         let finalPromptText = prompt;
-        if (extractedFileText) finalPromptText = `${prompt}\n\n[Dữ liệu đính kèm]:\n${extractedFileText}`;
+        if (extractedFileText) finalPromptText = `${prompt}\n\n[Dữ liệu đính kèm thêm]:\n${extractedFileText}`;
 
-        let userContent = [{ type: "text", text: finalPromptText || "Hãy xử lý bảng tính." }];
+        let userContent = [{ type: "text", text: finalPromptText || "Hãy phân tích bảng dữ liệu hiện tại." }];
         if (base64Image) userContent.push({ type: "image_url", image_url: { url: base64Image } });
 
         try {
@@ -207,9 +276,8 @@ Output JSON schema: {"headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]]}`;
             if (aiContent.endsWith('```')) aiContent = aiContent.substring(0, aiContent.length - 3);
 
             const parsedData = JSON.parse(aiContent.trim());
-            
-            initExcelGrid(parsedData.headers, parsedData.rows);
-            addMessage('Đã đồng bộ số liệu và dựng lưới ô Excel mới cho sếp!', 'ai');
+            renderTable(parsedData);
+            addMessage('Đã đồng bộ và cập nhật bảng tính mới cùng sếp!', 'ai');
         } catch (err) {
             document.getElementById('loadingState').style.display = 'none';
             addMessage(`Lỗi hệ thống: ${err.message}`, 'error');
@@ -218,17 +286,18 @@ Output JSON schema: {"headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]]}`;
 
     function addMessage(text, sender) {
         const history = document.getElementById('chatHistory');
-        const div = document.createElement('div'); div.className = `msg ${sender}`; div.innerText = text;
+        const div = document.createElement('div');
+        div.className = `msg ${sender}`; div.innerText = text;
         history.appendChild(div); history.scrollTop = history.scrollHeight;
     }
 
     document.getElementById('btnExport').addEventListener('click', () => {
-        const tableState = getGridDataFromScreen();
+        const tableState = getCurrentTableDataFromUI();
         const wb = XLSX.utils.book_new();
         const dataArray = [tableState.headers, ...tableState.rows];
         const ws = XLSX.utils.aoa_to_sheet(dataArray);
-        XLSX.utils.book_append_sheet(wb, ws, "Excel_Export");
-        XLSX.writeFile(wb, "ai_excel_export.xlsx");
+        XLSX.utils.book_append_sheet(wb, ws, "AI_Spreadsheet");
+        XLSX.writeFile(wb, "ai_spreadsheet_export.xlsx");
     });
 </script>
 </body>
