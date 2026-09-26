@@ -301,9 +301,22 @@
             spreadsheet: null,
             selectedFile: { base64: null, mimeType: null, name: null },
             isProcessing: false,
-            selectedModel: null
+            selectedModel: null,
+            geminiBase: 'https://generativelanguage.googleapis.com/v1beta',
+            modelPriority: [
+                'gemini-3.8-flash',
+                'gemini-3.7-flash',
+                'gemini-3.6-flash',
+                'gemini-3.5-flash',
+                'gemini-2.5-flash',
+                'gemini-2.5-pro',
+                'gemini-2.0-flash',
+                'gemini-1.5-flash',
+                'gemini-1.5-pro'
+            ]
         };
 
+        // ========== CHAT FUNCTIONS ==========
         function addChatMessage(text, type = 'bot', status = 'normal') {
             const chatBox = document.getElementById('chatBox');
             const wrapper = document.createElement('div');
@@ -321,7 +334,9 @@
         }
 
         function updateChatMessage(messageEl, text, status = 'normal') {
+            if (!messageEl) return;
             const bubble = messageEl.querySelector('.chatBubble');
+            if (!bubble) return;
             bubble.textContent = text;
             bubble.className = 'chatBubble bot';
             if (status !== 'normal') bubble.classList.add(status);
@@ -333,6 +348,7 @@
             if (!lastMessage) return;
 
             const bubble = lastMessage.querySelector('.chatBubble');
+            if (!bubble) return;
             const img = document.createElement('img');
             img.src = `data:${mimeType};base64,${base64}`;
             img.alt = 'Ảnh đã chọn';
@@ -341,6 +357,7 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
+        // ========== SPREADSHEET INIT ==========
         function initSpreadsheet() {
             try {
                 const container = document.getElementById('spreadsheetContainer');
@@ -372,6 +389,7 @@
             }
         }
 
+        // ========== FILE HANDLING ==========
         document.getElementById('fileInput').addEventListener('change', function (event) {
             const file = event.target.files[0];
             const status = document.getElementById('fileStatus');
@@ -384,7 +402,6 @@
 
             if (!file.type.startsWith('image/')) {
                 status.textContent = 'Vui lòng chọn ảnh';
-                alert('Vui lòng chọn file ảnh hợp lệ');
                 return;
             }
 
@@ -394,60 +411,211 @@
 
             const reader = new FileReader();
             reader.onload = function (e) {
-                app.selectedFile.base64 = e.target.result.split(',')[1];
+                const result = String(e.target.result);
+                const idx = result.indexOf(',');
+                app.selectedFile.base64 = idx !== -1 ? result.slice(idx + 1) : null;
             };
             reader.onerror = function () {
                 status.textContent = 'Lỗi đọc ảnh';
                 addChatMessage('❌ Lỗi đọc ảnh', 'bot', 'error');
+                app.selectedFile = { base64: null, mimeType: null, name: null };
             };
             reader.readAsDataURL(file);
         });
 
+        // ========== GEMINI API FUNCTIONS ==========
+
+        /**
+         * Gọi API để lấy danh sách model khả dụng
+         */
         async function getAvailableGeminiModels(apiKey) {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-            const response = await fetch(url, { method: 'GET' });
-            if (!response.ok) {
-                const body = await response.json().catch(() => ({}));
-                throw new Error(body.error?.message || `HTTP ${response.status}`);
+            if (!apiKey || !apiKey.trim()) {
+                throw new Error('API Key rỗng.');
             }
-            const data = await response.json();
-            const models = Array.isArray(data.models) ? data.models : [];
-            return models
-                .map(m => ({ name: m.name, methods: m.supportedGenerationMethods || [] }))
-                .filter(m => m.methods.includes('generateContent'))
-                .map(m => m.name.replace(/^models\//, ''));
+
+            const url = `${app.geminiBase}/models?key=${encodeURIComponent(apiKey)}`;
+            console.log('[Gemini] Lấy danh sách model từ:', url.replace(apiKey, '***'));
+
+            try {
+                const response = await fetch(url, { 
+                    method: 'GET',
+                    signal: AbortSignal.timeout(10000) 
+                });
+
+                if (!response.ok) {
+                    let errMsg = `HTTP ${response.status}`;
+                    try {
+                        const errorJson = await response.json();
+                        if (errorJson.error?.message) {
+                            errMsg = errorJson.error.message;
+                        }
+                    } catch (e) {}
+                    throw new Error(errMsg);
+                }
+
+                const data = await response.json();
+                const models = Array.isArray(data.models) ? data.models : [];
+
+                if (!models.length) {
+                    throw new Error('API trả về danh sách model rỗng. Kiểm tra API Key.');
+                }
+
+                const filtered = models
+                    .filter(m => Array.isArray(m.supportedGenerationMethods) && 
+                                m.supportedGenerationMethods.includes('generateContent'))
+                    .map(m => m.name.replace(/^models\//, ''));
+
+                console.log('[Gemini] Model khả dụng:', filtered);
+
+                return filtered;
+            } catch (error) {
+                console.error('[Gemini] Lỗi lấy danh sách model:', error);
+                throw error;
+            }
         }
 
+        /**
+         * Chọn model tự động từ danh sách ưu tiên
+         */
         async function resolveGeminiModel(apiKey) {
-            const preferred = [
-                'gemini-3.8-flash',
-                'gemini-3.7-flash',
-                'gemini-3.6-flash',
-                'gemini-3.5-flash',
-                'gemini-2.5-flash',
-                'gemini-2.5-pro',
-                'gemini-2.0-flash',
-                'gemini-1.5-pro',
-                'gemini-1.5-flash'
-            ];
+            try {
+                const available = await getAvailableGeminiModels(apiKey);
 
-            const available = await getAvailableGeminiModels(apiKey);
-            console.log('Available Gemini models:', available);
+                if (!available.length) {
+                    throw new Error(
+                        'Không tìm thấy model nào hỗ trợ generateContent.\n' +
+                        '• Kiểm tra API Key có hợp lệ không\n' +
+                        '• Tài khoản Google có được cấp quyền Gemini API không\n' +
+                        '• Truy cập Google AI Studio để cấp quyền'
+                    );
+                }
 
-            if (!available.length) {
-                throw new Error('API Key hợp lệ nhưng không có model nào hỗ trợ generateContent trong tài khoản của bạn. Vui lòng kiểm tra quyền truy cập Gemini API.');
+                // Tìm model ưu tiên
+                const selected = app.modelPriority
+                    .find(preferred => available.includes(preferred)) 
+                    || available[0];
+
+                console.log('[Gemini] Chọn model:', selected);
+                return selected;
+            } catch (error) {
+                throw error;
             }
-
-            const found = preferred.find(model => available.includes(model));
-            if (found) return found;
-
-            return available[0];
         }
 
+        /**
+         * Làm sạch JSON từ Gemini (loại bỏ markdown code fence)
+         */
+        function cleanGeminiJson(text) {
+            let cleaned = String(text || '').trim();
+
+            // Loại bỏ markdown code fence
+            cleaned = cleaned
+                .replace(/^```json\s*\n?/, '')
+                .replace(/^```\s*\n?/, '')
+                .replace(/\n?```\s*$/, '')
+                .trim();
+
+            // Tìm vị trí bắt đầu [ và kết thúc ]
+            const startIdx = cleaned.indexOf('[');
+            const endIdx = cleaned.lastIndexOf(']');
+
+            if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+                cleaned = cleaned.slice(startIdx, endIdx + 1);
+            }
+
+            return cleaned;
+        }
+
+        /**
+         * Parse và validate JSON từ Gemini
+         */
+        function parseGeminiResponse(text) {
+            const cleaned = cleanGeminiJson(text);
+            console.log('[Gemini] Cleaned response:', cleaned);
+
+            let parsed;
+            try {
+                parsed = JSON.parse(cleaned);
+            } catch (err) {
+                console.error('[Gemini] JSON parse error:', err, 'Text:', cleaned);
+                throw new Error(`JSON không hợp lệ: ${err.message}`);
+            }
+
+            if (!Array.isArray(parsed)) {
+                throw new Error('Dữ liệu không phải mảng JSON.');
+            }
+
+            // Validate từng phần tử
+            const validated = parsed.filter(cell => {
+                if (!cell || typeof cell !== 'object') return false;
+                const row = Number(cell.row);
+                const col = Number(cell.col);
+                return Number.isInteger(row) && row >= 0 && 
+                       Number.isInteger(col) && col >= 0 && 
+                       (cell.val !== null && cell.val !== undefined);
+            });
+
+            if (!validated.length) {
+                throw new Error('Không có ô dữ liệu hợp lệ để điền.');
+            }
+
+            return validated;
+        }
+
+        /**
+         * Gọi Gemini generateContent API
+         */
+        async function callGeminiGenerateContent(modelName, apiKey, parts) {
+            const endpoint = `${app.geminiBase}/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+
+            console.log('[Gemini] Gọi:', endpoint.replace(apiKey, '***'));
+
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts }],
+                    generationConfig: {
+                        temperature: 0.1,
+                        maxOutputTokens: 4096,
+                        responseMimeType: 'application/json'
+                    }
+                }),
+                signal: AbortSignal.timeout(30000)
+            });
+
+            if (!response.ok) {
+                let errMsg = `HTTP ${response.status}`;
+                try {
+                    const errorJson = await response.json();
+                    if (errorJson.error?.message) {
+                        errMsg = errorJson.error.message;
+                    }
+                } catch (e) {}
+                throw new Error(errMsg);
+            }
+
+            const json = await response.json();
+            console.log('[Gemini] Response:', json);
+
+            const responseText = json.candidates?.[0]?.content?.parts
+                ?.map(p => p.text || '')
+                .join('')
+                .trim();
+
+            if (!responseText) {
+                throw new Error('Gemini không trả về nội dung.');
+            }
+
+            return responseText;
+        }
+
+        /**
+         * Main function: Gửi lệnh tới Gemini
+         */
         async function sendToGemini() {
             const apiKey = document.getElementById('apiKeyInput').value.trim();
-            const userInput = document.getElementById('userInput');
-            const query = userInput.value.trim();
+            const query = document.getElementById('userInput').value.trim();
 
             if (!query && !app.selectedFile.base64) {
                 alert('Vui lòng nhập lệnh hoặc chọn ảnh');
@@ -462,31 +630,46 @@
             app.isProcessing = true;
             document.getElementById('sendBtn').disabled = true;
 
+            let processingMsg = null;
+
             try {
+                // Hiển thị tin nhắn user
                 addChatMessage(query || '📸 Đã gửi hình ảnh', 'user');
-                if (app.selectedFile.base64) addImageToLastMessage(app.selectedFile.base64, app.selectedFile.mimeType);
+                if (app.selectedFile.base64) {
+                    addImageToLastMessage(app.selectedFile.base64, app.selectedFile.mimeType);
+                }
 
-                const processingMsg = addChatMessage('⏳ Robot đang xử lý...', 'bot');
+                processingMsg = addChatMessage('⏳ Robot đang xử lý...', 'bot');
 
+                // Bước 1: Resolve model
+                console.log('[Process] Bước 1: Tìm model Gemini...');
                 app.selectedModel = await resolveGeminiModel(apiKey);
-                console.log('Selected Gemini model:', app.selectedModel);
+                updateChatMessage(processingMsg, `⏳ Đang sử dụng model: ${app.selectedModel}...`, 'normal');
 
+                // Bước 2: Xây dựng prompt
                 const systemPrompt = `Bạn là trợ lý AI chuyên biệt điền dữ liệu vào bảng tính Excel.
 
 NHIỆM VỤ: Phân tích yêu cầu hoặc ảnh, sau đó trả về JSON để điền lên bảng tính.
 
 ĐỊNH DẠNG JSON BẮT BUỘC:
-[{"row": 0, "col": 0, "val": "Tên cột"}, {"row": 1, "col": 0, "val": "Giá trị"}]
+[{"row": 0, "col": 0, "val": "Giá trị"}]
 
-QUY TẮC:
+QUY TẮC NGHIÊM NGẶT:
+- CHỈ trả về JSON, không markdown, không giải thích
 - row: 0 = hàng 1, 1 = hàng 2, ...
 - col: 0 = cột A, 1 = cột B, ...
-- Nếu là công thức Excel, dùng chuỗi bắt đầu bằng =, ví dụ "=SUM(B2:B10)"
-- CHỈ trả về JSON, không có markdown, không có giải thích.`;
+- val có thể là văn bản, số, hoặc công thức (=SUM(B2:B5))
+- Mỗi object chỉ có 3 thuộc tính: row, col, val
+- Không được thêm bất kỳ ký tự nào ngoài JSON`;
 
-                const parts = [{ text: systemPrompt + '\n\nYêu cầu: ' + (query || 'Đọc dữ liệu trong ảnh') }];
+                const parts = [{ 
+                    text: systemPrompt + '\n\nYêu cầu: ' + (query || 'Đọc dữ liệu trong ảnh và chuyển thành bảng') 
+                }];
 
                 if (app.selectedFile.base64) {
+                    if (!app.selectedFile.mimeType || !app.selectedFile.mimeType.startsWith('image/')) {
+                        throw new Error('MIME type ảnh không hợp lệ');
+                    }
                     parts.push({
                         inlineData: {
                             mimeType: app.selectedFile.mimeType,
@@ -495,58 +678,35 @@ QUY TẮC:
                     });
                 }
 
-                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${app.selectedModel}:generateContent?key=${apiKey}`;
-                console.log('Calling Gemini endpoint:', endpoint);
+                // Bước 3: Gọi Gemini
+                console.log('[Process] Bước 2: Gọi Gemini generateContent...');
+                const responseText = await callGeminiGenerateContent(app.selectedModel, apiKey, parts);
 
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts }],
-                        generationConfig: {
-                            temperature: 0.1,
-                            maxOutputTokens: 2048
-                        }
-                    })
-                });
+                // Bước 4: Parse JSON
+                console.log('[Process] Bước 3: Parse JSON...');
+                const cells = parseGeminiResponse(responseText);
 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({}));
-                    throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-                }
-
-                const json = await response.json();
-                console.log('Gemini raw response:', json);
-
-                if (!json.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    throw new Error('Gemini không trả về dữ liệu hợp lệ');
-                }
-
-                let responseText = json.candidates[0].content.parts[0].text.trim();
-                if (responseText.includes('```')) {
-                    responseText = responseText.replace(/```json\n?|\n?```/g, '').trim();
-                }
-
-                const parsed = JSON.parse(responseText);
-                if (!Array.isArray(parsed)) throw new Error('Dữ liệu trả về không phải mảng JSON');
-
+                // Bước 5: Điền dữ liệu
+                console.log('[Process] Bước 4: Điền dữ liệu vào bảng...');
                 let count = 0;
-                parsed.forEach(cell => {
-                    if (app.spreadsheet && typeof cell.row === 'number' && typeof cell.col === 'number' && cell.val !== null && cell.val !== undefined) {
+                cells.forEach(cell => {
+                    if (app.spreadsheet) {
                         try {
                             app.spreadsheet.setDataAtCell(cell.row, cell.col, String(cell.val));
                             count++;
                         } catch (err) {
-                            console.warn('Set cell error:', err, cell);
+                            console.warn('[Spreadsheet] Set cell error:', err, cell);
                         }
                     }
                 });
 
-                updateChatMessage(processingMsg, `✅ Đã điền ${count} ô dữ liệu!`, 'success');
+                updateChatMessage(processingMsg, `✅ Thành công! Đã điền ${count} ô dữ liệu.`, 'success');
+                console.log('[Process] Hoàn thành');
 
             } catch (error) {
-                console.error('Gemini error:', error);
-                addChatMessage(`❌ Lỗi: ${error.message}`, 'bot', 'error');
+                console.error('[Process] Lỗi:', error);
+                const errorMsg = error.message || 'Lỗi không xác định';
+                updateChatMessage(processingMsg, `❌ Lỗi: ${errorMsg}`, 'error');
             } finally {
                 app.isProcessing = false;
                 document.getElementById('sendBtn').disabled = false;
@@ -558,13 +718,9 @@ QUY TẮC:
             }
         }
 
+        // ========== EVENT LISTENERS ==========
         document.getElementById('sendBtn').addEventListener('click', function () {
             if (app.isProcessing) return;
-            const query = document.getElementById('userInput').value.trim();
-            if (!query && !app.selectedFile.base64) {
-                alert('Vui lòng nhập lệnh hoặc chọn ảnh');
-                return;
-            }
             sendToGemini();
         });
 
@@ -610,9 +766,10 @@ QUY TẮC:
             }
         });
 
+        // ========== WINDOW LOAD ==========
         window.addEventListener('load', function () {
             initSpreadsheet();
-            addChatMessage('👋 Chào bạn! Hãy dán API Key và gửi lệnh hoặc ảnh.', 'bot');
+            addChatMessage('👋 Chào bạn! Hãy dán API Key và bắt đầu.', 'bot');
             document.getElementById('apiKeyInput').focus();
         });
     </script>
