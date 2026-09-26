@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Spreadsheet - Bảo Sao Làm Vậy</title>
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; flex-direction: column; height: 100vh; background-color: #f4f6f9; color: #333; }
+        header { background-color: #107c41; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .config-area { display: flex; gap: 10px; align-items: center; }
+        .config-area input { padding: 6px 10px; border: none; border-radius: 4px; width: 250px; }
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        .sidebar { width: 320px; background: white; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; padding: 15px; box-shadow: 2px 0 5px rgba(0,0,0,0.02); }
+        .chat-history { flex: 1; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; padding: 10px; margin-bottom: 10px; background: #fafafa; font-size: 14px; }
+        .msg { margin-bottom: 10px; padding: 8px 12px; border-radius: 6px; max-width: 85%; line-height: 1.4; }
+        .msg.user { background: #e1f5fe; margin-left: auto; color: #0277bd; }
+        .msg.ai { background: #f1f1f1; margin-right: auto; color: #333; }
+        .msg.error { background: #ffebee; color: #c62828; margin-right: auto; }
+        textarea { width: 100%; height: 80px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: none; margin-bottom: 8px; font-size: 14px; }
+        button { background: #107c41; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: 600; width: 100%; transition: background 0.2s; }
+        button:hover { background: #0b592e; }
+        .btn-export { background: #0078d4; margin-top: 10px; }
+        .btn-export:hover { background: #005a9e; }
+        .content { flex: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; }
+        .table-container { flex: 1; background: white; border: 1px solid #d0d0d0; border-radius: 4px; overflow: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        table { border-collapse: collapse; min-width: 100%; font-size: 14px; }
+        th, td { border: 1px solid #d0d0d0; padding: 8px 12px; text-align: left; min-width: 100px; }
+        th { background-color: #f3f3f3; font-weight: 600; position: sticky; top: 0; z-index: 10; color: #444; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .loading { display: none; text-align: center; color: #666; font-size: 14px; margin-top: 5px; font-style: italic; }
+    </style>
+</head>
+<body>
+<header>
+    <h2>📊 AI Spreadsheet Editor</h2>
+    <div class="config-area">
+        <label for="apiKey">OpenAI API Key:</label>
+        <input type="password" id="apiKey" placeholder="sk-..." />
+    </div>
+</header>
+
+<div class="main-container">
+    <div class="sidebar">
+        <h3>💬 Ra lệnh cho AI</h3>
+        <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Bảo AI tạo bảng, điền dữ liệu hoặc sửa bảng...</p>
+        <div class="chat-history" id="chatHistory">
+            <div class="msg ai">Xin chào! Bạn muốn mình tạo hoặc chỉnh sửa bảng tính như thế nào? Hãy nhập yêu cầu bên dưới nhé.</div>
+        </div>
+        <textarea id="promptInput" placeholder="Ví dụ: Tạo bảng quản lý chi tiêu tháng này gồm 4 cột Ngày, Nội dung, Số tiền, Loại. Thêm sẵn 3 dòng ví dụ..."></textarea>
+        <button id="btnSend">Gửi yêu cầu</button>
+        <div class="loading" id="loadingState">AI đang xử lý và dựng bảng...</div>
+        <button class="btn-export" id="btnExport">📥 Xuất file Excel (.xlsx)</button>
+    </div>
+
+    <div class="content">
+        <div class="table-container">
+            <table id="spreadsheet">
+                <thead>
+                    <tr><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+    const apiKeyInput = document.getElementById('apiKey');
+    if (localStorage.getItem('openAiKey')) {
+        apiKeyInput.value = localStorage.getItem('openAiKey');
+    }
+    apiKeyInput.addEventListener('input', () => {
+        localStorage.setItem('openAiKey', apiKeyInput.value.trim());
+    });
+
+    let currentTableData = { headers: ["A", "B", "C", "D", "E"], rows: [["", "", "", "", ""], ["", "", "", "", ""], ["", "", "", "", ""]] };
+
+    function renderTable(data) {
+        const table = document.getElementById('spreadsheet');
+        table.innerHTML = '';
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        data.headers.forEach(h => {
+            const th = document.createElement('th');
+            th.innerText = h;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        data.rows.forEach(r => {
+            const row = document.createElement('tr');
+            r.forEach(cell => {
+                const td = document.createElement('td');
+                td.innerText = cell === null || cell === undefined ? '' : cell;
+                row.appendChild(td);
+            });
+            tbody.appendChild(row);
+        });
+        table.appendChild(tbody);
+        currentTableData = data;
+    }
+    document.getElementById('btnSend').addEventListener('click', async () => {
+        const prompt = document.getElementById('promptInput').value.trim();
+        const apiKey = apiKeyInput.value.trim();
+        if (!apiKey) return alert('Vui lòng nhập OpenAI API Key!');
+        if (!prompt) return alert('Vui lòng nhập yêu cầu!');
+
+        addMessage(prompt, 'user');
+        document.getElementById('promptInput').value = '';
+        document.getElementById('loadingState').style.display = 'block';
+
+        const systemInstruction = `You are an AI assistant that controls a spreadsheet editor. Your job is to output a raw JSON object that completely replaces or modifies the current table state. Strictly return ONLY raw valid JSON, no chat, no markdown. Current: ${JSON.stringify(currentTableData)}. Output schema: {"headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]]}`;
+
+        try {
+            const response = await fetch('https://openai.com', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+                body: JSON.stringify({ model: 'gpt-4o-mini', messages: [{ role: 'system', content: systemInstruction }, { role: 'user', content: prompt }], temperature: 0.2 })
+            });
+
+            const result = await response.json();
+            document.getElementById('loadingState').style.display = 'none';
+            if (result.error) return addMessage(`Lỗi: ${result.error.message}`, 'error');
+
+            let aiContent = result.choices[0].message.content.trim();
+            if (aiContent.startsWith('```json')) aiContent = aiContent.replace('```json', '');
+            if (aiContent.endsWith('```')) aiContent = aiContent.substring(0, aiContent.length - 3);
+
+            const parsedData = JSON.parse(aiContent.trim());
+            renderTable(parsedData);
+            addMessage('Đã cập nhật bảng theo yêu cầu!', 'ai');
+        } catch (err) {
+            document.getElementById('loadingState').style.display = 'none';
+            addMessage(`Lỗi kết nối: ${err.message}`, 'error');
+        }
+    });
+
+    function addMessage(text, sender) {
+        const history = document.getElementById('chatHistory');
+        const div = document.createElement('div');
+        div.className = `msg ${sender}`;
+        div.innerText = text;
+        history.appendChild(div);
+        history.scrollTop = history.scrollHeight;
+    }
+
+    document.getElementById('btnExport').addEventListener('click', () => {
+        const wb = XLSX.utils.book_new();
+        const dataArray = [currentTableData.headers, ...currentTableData.rows];
+        const ws = XLSX.utils.aoa_to_sheet(dataArray);
+        XLSX.utils.book_append_sheet(wb, ws, "AI_Spreadsheet");
+        XLSX.writeFile(wb, "ai_spreadsheet_export.xlsx");
+    });
+</script>
+</body>
+</html>
