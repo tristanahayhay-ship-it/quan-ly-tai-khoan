@@ -56,7 +56,7 @@
         <h3>💬 Ra lệnh cho Robot</h3>
         <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Hệ thống chạy bằng Google Gemini hoàn toàn miễn phí. Hãy dán dữ liệu hoặc ra lệnh nhé!</p>
         <div class="chat-history" id="chatHistory">
-            <div class="msg ai">Chào sếp! Em đã chuyển nhà sang máy chủ Google Gemini rồi ạ. Sếp hãy dán Key của Google vào góc trên để dùng thử miễn phí nha!</div>
+            <div class="msg ai">Chào sếp! Hệ thống đã được cấu hình sang phiên bản Gemini mới nhất. Sếp hãy nhập khóa API ở góc trên rồi thử gửi lệnh lại nhé!</div>
         </div>
         
         <div class="input-group">
@@ -139,7 +139,6 @@
             reader.readAsText(file);
         }
     });
-
     function getCurrentTableDataFromUI() {
         const table = document.getElementById('spreadsheet');
         const headers = [];
@@ -205,7 +204,6 @@
             });
         });
     });
-
     document.getElementById('btnAddRow').addEventListener('click', () => {
         const tbody = document.querySelector('#spreadsheet tbody');
         const colCount = document.querySelectorAll('#spreadsheet thead th').length || 4;
@@ -242,9 +240,7 @@
         document.getElementById('fileInfoBox').style.display = 'none';
         document.getElementById('loadingState').style.display = 'block';
 
-        const systemInstruction = `You are an AI data assistant. Analyze the user's current table data and apply their modifications. You must return ONLY a raw valid JSON object replacing/updating the spreadsheet. No chat, no markdown format blocks.
-Current Table Data on screen: ${JSON.stringify(tableState)}.
-Output JSON schema: {"headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]]}`;
+        const systemInstruction = `You are an AI data assistant. Analyze the user's current table data and apply their modifications. You must return ONLY a raw valid JSON object replacing/updating the spreadsheet. No chat, no markdown format blocks. Current Table Data on screen: ${JSON.stringify(tableState)}. Output JSON schema: {"headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]]}`;
 
         let finalPromptText = prompt;
         if (extractedFileText) finalPromptText = `${prompt}\n\n[Dữ liệu đính kèm thêm]:\n${extractedFileText}`;
@@ -253,12 +249,11 @@ Output JSON schema: {"headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]]}`;
         if (base64Image) userContent.push({ type: "image_url", image_url: { url: base64Image } });
 
         try {
-            // Sử dụng Cổng tương thích OpenAI của Google Gemini (Miễn phí)
-            const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
+            const response = await fetch('https://googleapis.com', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
                 body: JSON.stringify({ 
-                    model: 'gemini-3.5-flash', 
+                    model: 'gemini-2.5-flash', 
                     messages: [{ role: 'system', content: systemInstruction }, { role: 'user', content: userContent }], 
                     temperature: 0.2 
                 })
@@ -270,18 +265,24 @@ Output JSON schema: {"headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]]}`;
 
             if (result.error) return addMessage(`Lỗi: ${result.error.message}`, 'error');
 
-            let aiContent = result.choices[0].message.content.trim();
+            let aiContent = result.choices.message.content.trim();
             if (aiContent.startsWith('```json')) aiContent = aiContent.replace('```json', '');
             if (aiContent.endsWith('```')) aiContent = aiContent.substring(0, aiContent.length - 3);
 
             const parsedData = JSON.parse(aiContent.trim());
             renderTable(parsedData);
-            addMessage('Đã đồng bộ dữ liệu và cập nhật bảng cùng sếp (Chạy bằng Gemini miễn phí)!', 'ai');
+            addMessage('Đã cập nhật bảng cùng sếp (Chạy bằng Gemini miễn phí)!', 'ai');
         } catch (err) {
             document.getElementById('loadingState').style.display = 'none';
             addMessage(`Lỗi hệ thống: ${err.message}`, 'error');
         }
     });
+
+    function addMessage(text, sender) {
+        const history = document.getElementById('chatHistory');
+        const div = document.createElement('div'); div.className = `msg ${sender}`; div.innerText = text;
+        history.appendChild(div); history.scrollTop = history.scrollHeight;
+    }
 
     document.getElementById('btnExport').addEventListener('click', () => {
         const tableState = getCurrentTableDataFromUI();
