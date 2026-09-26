@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ thống Excel AI Robot Đa Năng</title>
+    <title>Hệ thống Excel Gemini Robot Siêu Cấp</title>
     
     <!-- Tải CSS thư viện bảng tính Luckysheet -->
     <link rel='stylesheet' href='https://jsdelivr.net' />
@@ -11,7 +11,7 @@
     <link rel='stylesheet' href='https://jsdelivr.net' />
     <link rel='stylesheet' href='https://jsdelivr.net' />
     
-    <!-- Tải các JS thư viện hệ thống và xử lý file -->
+    <!-- Tải các thư viện cốt lõi xử lý dữ liệu và File -->
     <script src="https://jsdelivr.net"></script>
     <script src="https://jsdelivr.net"></script>
     <script src="https://jsdelivr.net"></script>
@@ -44,34 +44,34 @@
             background-color: #f8f9fa; border-left: 2px solid #dee2e6;
             display: flex; flex-direction: column;
         }
-        .ai-title { background-color: #0078d4; color: white; padding: 12px 15px; font-weight: bold; }
-        .api-config-box { padding: 10px 15px; background-color: #e2e3e5; border-bottom: 1px solid #d3d3d4; font-size: 13px; }
-        .api-input { width: 100%; box-sizing: border-box; padding: 6px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        .ai-title { background-color: #1a73e8; color: white; padding: 12px 15px; font-weight: bold; }
+        .api-config-box { padding: 10px 15px; background-color: #e8f0fe; border-bottom: 1px solid #d2e3fc; font-size: 13px; }
+        .api-input { width: 100%; box-sizing: border-box; padding: 6px; margin-top: 5px; border: 1px solid #1a73e8; border-radius: 4px; }
         #chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .msg { padding: 10px 12px; border-radius: 8px; max-width: 85%; font-size: 14px; line-height: 1.4; }
-        .user-msg { background-color: #d1e7dd; align-self: flex-end; color: #0f5132; }
+        .user-msg { background-color: #e8f0fe; align-self: flex-end; color: #1a73e8; }
         .bot-msg { background-color: #fff; border: 1px solid #dee2e6; align-self: flex-start; color: #212529; }
         .chat-image-preview { max-width: 150px; border-radius: 4px; margin-top: 5px; display: block; }
         .controls-area { border-top: 1px solid #dee2e6; background-color: #fff; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
         .upload-row { display: flex; gap: 10px; align-items: center; }
         .upload-label {
-            background-color: #e1dfdd; color: #323130; padding: 6px 12px;
+            background-color: #f1f3f4; color: #3c4043; padding: 6px 12px;
             border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600;
-            display: flex; align-items: center; gap: 5px; border: 1px solid #8a8886;
+            display: flex; align-items: center; gap: 5px; border: 1px solid #dadce0;
         }
-        .upload-label:hover { background-color: #d2d0ce; }
+        .upload-label:hover { background-color: #e8eaed; }
         #file-input { display: none; }
-        #file-status { font-size: 12px; color: #605e5c; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+        #file-status { font-size: 12px; color: #5f6368; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
         .input-row { display: flex; gap: 8px; }
         #user-input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
-        #send-btn { background-color: #107c41; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        #send-btn:hover { background-color: #0b592e; }
+        #send-btn { background-color: #1a73e8; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        #send-btn:hover { background-color: #1557b0; }
     </style>
 </head>
 <body>
 
     <div id="top-bar">
-        <span>📊 Bảng tính Excel Hệ thống kết hợp Robot Đa Phương Tiện</span>
+        <span>📊 Bảng tính Excel kết hợp Robot Google Gemini Vision</span>
         <button id="export-btn" onclick="exportToExcel()">📥 Xuất file Excel (.xlsx)</button>
     </div>
 
@@ -79,22 +79,22 @@
         <div id="luckysheet-container"></div>
 
         <div id="ai-sidebar">
-            <div class="ai-title">🤖 Robot Copilot Vision & Data</div>
+            <div class="ai-title">🤖 Robot Gemini Copilot Intelligence</div>
             <div class="api-config-box">
-                <label for="api-key-field">🔑 <strong>Nhập Key Bí Mật của bạn:</strong></label>
-                <input type="password" id="api-key-field" class="api-input" placeholder="Dán mã API Key của bạn để kích hoạt...">
+                <label for="api-key-field">🔑 <strong>Nhập Key Google Gemini của bạn:</strong></label>
+                <input type="password" id="api-key-field" class="api-input" placeholder="Dán mã Gemini API Key vào đây...">
             </div>
             <div id="chat-box">
-                <div class="msg bot-msg">Xin chào! Bạn có thể <b>bấm nút đính kèm 📎</b> để tải lên ảnh chụp hóa đơn hoặc bảng biểu, sau đó ra lệnh để tôi điền vào Excel nhé!</div>
+                <div class="msg bot-msg">Chào bạn! Hệ thống đã chuyển sang sử dụng bộ não **Google Gemini**. Hãy dán Key Gemini của bạn lên khung trên, sau đó thoải mái **đính kèm ảnh 📎** và ra lệnh để tôi điền vào ô lưới Excel nhé!</div>
             </div>
             <div class="controls-area">
                 <div class="upload-row">
-                    <label for="file-input" class="upload-label">📎 Đính kèm Ảnh / Tệp</label>
-                    <input type="file" id="file-input" accept="image/*,application/pdf,text/plain" onchange="handleFileSelect()">
-                    <span id="file-status">Chưa có tệp nào được chọn</span>
+                    <label for="file-input" class="upload-label">📎 Đính kèm Ảnh</label>
+                    <input type="file" id="file-input" accept="image/*" onchange="handleFileSelect()">
+                    <span id="file-status">Chưa có ảnh nào được chọn</span>
                 </div>
                 <div class="input-row">
-                    <input type="text" id="user-input" placeholder="Bảo gì làm nấy..." onkeypress="if(event.key === 'Enter') sendToAI()">
+                    <input type="text" id="user-input" placeholder="Bảo gì làm nấy bằng sức mạnh Gemini..." onkeypress="if(event.key === 'Enter') sendToAI()">
                     <button id="send-btn" onclick="sendToAI()">Gửi</button>
                 </div>
             </div>
@@ -104,11 +104,11 @@
         let selectedFileBase64 = null;
         let selectedFileType = null;
 
-        // Khởi tạo giao diện ô lưới Excel
+        // Khởi tạo không gian bảng lưới Excel
         $(function () {
             var options = {
                 container: 'luckysheet-container',
-                title: 'Workspace_Robot_Vision',
+                title: 'Workspace_Gemini_Vision',
                 lang: 'zh',
                 showinfobar: false,
                 showtoolbar: true,
@@ -118,7 +118,7 @@
             luckysheet.create(options);
         });
 
-        // Xử lý khi người dùng chọn File từ máy tính
+        // Xử lý đọc và mã hóa dữ liệu hình ảnh
         function handleFileSelect() {
             const fileInput = document.getElementById('file-input');
             const fileStatus = document.getElementById('file-status');
@@ -127,7 +127,7 @@
             if (!file) {
                 selectedFileBase64 = null;
                 selectedFileType = null;
-                fileStatus.innerText = "Chưa có tệp nào được chọn";
+                fileStatus.innerText = "Chưa có ảnh nào được chọn";
                 return;
             }
 
@@ -136,12 +136,12 @@
 
             const reader = new FileReader();
             reader.onload = function (e) {
-                // Chuyển file thành chuỗi dữ liệu Base64 gửi cho Robot đọc
+                // Tách lấy chuỗi base64 thuần để đóng gói gửi sang cổng cấu trúc của Google
                 selectedFileBase64 = e.target.result.split(',')[1];
             };
             reader.readAsDataURL(file);
         }
-        // Hàm ra lệnh và gửi dữ liệu cho Robot xử lý
+        // Xử lý gửi lệnh truyền tin và phân tích dữ liệu thị giác đến Google Gemini
         async function sendToAI() {
             let inputField = document.getElementById('user-input');
             let apiKeyField = document.getElementById('api-key-field');
@@ -150,16 +150,16 @@
 
             if (!query && !selectedFileBase64) return;
             if (!apiKey) {
-                alert("Vui lòng nhập mã Key cấu hình ở khung phía trên trước!");
+                alert("Vui lòng điền mã khóa Gemini API Key vào ô phía trên!");
                 return;
             }
 
             let chatBox = document.getElementById('chat-box');
             let userMsgDiv = document.createElement('div');
             userMsgDiv.className = 'msg user-msg';
-            userMsgDiv.innerText = query || "Đã gửi một tệp tài liệu để xử lý.";
+            userMsgDiv.innerText = query || "Đã tải lên hình ảnh cấu trúc để phân tích.";
             
-            if (selectedFileBase64 && selectedFileType.startsWith('image/')) {
+            if (selectedFileBase64) {
                 let imgPreview = document.createElement('img');
                 imgPreview.src = `data:${selectedFileType};base64,${selectedFileBase64}`;
                 imgPreview.className = 'chat-image-preview';
@@ -169,50 +169,51 @@
             chatBox.scrollTop = chatBox.scrollHeight;
 
             inputField.value = '';
-            let loadingId = appendMessage("🤖 Robot đang quét dữ liệu và ghi vào ô lưới...", 'bot-msg');
+            let loadingId = appendMessage("🤖 Mắt thần Gemini đang quét ảnh và cấu trúc hóa bảng dữ liệu...", 'bot-msg');
 
             try {
-                const systemPrompt = `Bạn là mắt thần AI điều khiển Excel. Nhiệm vụ của bạn là đọc hình ảnh hoặc văn bản tài liệu người dùng tải lên, kết hợp với yêu cầu của họ, sau đó trích xuất thành JSON mảng. Không giải thích gì thêm ngoài JSON.
-Định dạng JSON bắt buộc: [{"row": số_hàng, "col": số_cột, "val": giá_trị_hoặc_công_thức}]`;
+                // Thiết lập cấu trúc Prompt ép xung ra mảng JSON thuần túy cho Luckysheet
+                const promptInstruct = `${query || "Đọc bảng dữ liệu trong ảnh này"}
+Nhiệm vụ của bạn là phân tích dữ liệu từ hình ảnh hoặc yêu cầu trên, trích xuất tất cả thành một mảng cấu trúc JSON thuần để cập nhật trực tiếp vào lưới Excel. Không viết thêm bất kỳ từ ngữ giải thích nào khác ngoài JSON.
+Định dạng JSON chuẩn bắt buộc: [{"row": số_hàng, "col": số_cột, "val": giá_trị_hoặc_công_thức}]
+Lưu ý: Hàng đầu tiên tương ứng với row: 0. Nếu có tính tổng hay tính toán hãy dùng công thức Excel như "=SUM(B2:B5)"`;
 
-                let messageContent = [];
-                messageContent.push({ type: "text", text: query || "Hãy đọc dữ liệu từ tệp này và dựng thành bảng tính Excel." });
-
+                // Xây dựng cấu trúc gói tin theo giao thức Google AI Studio [Zapier]
+                let parts = [{ text: promptInstruct }];
                 if (selectedFileBase64) {
-                    messageContent.push({
-                        type: "image_url",
-                        image_url: { url: `data:${selectedFileType};base64,${selectedFileBase64}` }
+                    parts.push({
+                        inlineData: {
+                            mimeType: selectedFileType,
+                            data: selectedFileBase64
+                        }
                     });
                 }
 
-                const response = await fetch("https://openai.com", {
+                // Thực hiện gọi Endpoint chính thức của Google Gemini [Google Cloud Blog]
+                const url = `https://googleapis.com{apiKey}`;
+                
+                const response = await fetch(url, {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: "gpt-4o-mini",
-                        messages: [
-                            { role: "system", content: systemPrompt },
-                            { role: "user", content: messageContent }
-                        ],
-                        temperature: 0.1
-                    })
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ contents: [{ parts: parts }] })
                 });
 
                 const rawData = await response.json();
+                
                 if (rawData.error) {
-                    document.getElementById(loadingId).innerText = "❌ Lỗi kết nối Robot: " + rawData.error.message;
+                    document.getElementById(loadingId).innerText = "❌ Lỗi xác thực Gemini: " + rawData.error.message;
                     return;
                 }
 
-                let aiTextResponse = rawData.choices[0].message.content.trim();
-                if(aiTextResponse.startsWith("```json")) {
+                let aiTextResponse = rawData.candidates[0].content.parts[0].text.trim();
+                
+                // Loại bỏ ký tự bao bọc mã code nếu Gemini tự động thêm vào
+                if (aiTextResponse.includes("```")) {
                     aiTextResponse = aiTextResponse.replace(/```json|```/g, "").trim();
                 }
 
                 let cellDataArray = JSON.parse(aiTextResponse);
+                
                 if (Array.isArray(cellDataArray)) {
                     cellDataArray.forEach(cell => {
                         if (cell.val && typeof cell.val === 'string' && cell.val.startsWith('=')) {
@@ -222,23 +223,26 @@
                         }
                     });
                     luckysheet.refresh();
-                    document.getElementById(loadingId).innerText = "✅ Robot đã ghi dữ liệu vào bảng tính thành công!";
+                    document.getElementById(loadingId).innerText = "✅ Robot Gemini đã phân tích thị giác và ghi dữ liệu thành công vào bảng tính!";
                 } else {
-                    document.getElementById(loadingId).innerText = "🤖 Dữ liệu phân tích từ file không đúng cấu trúc dòng cột.";
+                    document.getElementById(loadingId).innerText = "🤖 Dữ liệu phản hồi từ Gemini không khớp định dạng bảng Excel.";
                 }
+
             } catch (error) {
-                document.getElementById(loadingId).innerText = "❌ Lỗi hệ thống khi xử lý. Hãy kiểm tra lại Key!";
+                document.getElementById(loadingId).innerText = "❌ Gặp sự cố xử lý ảnh. Hãy chắc chắn ảnh rõ nét và Key chính xác!";
+                console.error(error);
             } finally {
+                // Dọn dẹp trạng thái file sau phiên truyền tải dữ liệu
                 document.getElementById('file-input').value = "";
-                document.getElementById('file-status').innerText = "Chưa có tệp nào được chọn";
+                document.getElementById('file-status').innerText = "Chưa có ảnh nào được chọn";
                 selectedFileBase64 = null; selectedFileType = null;
             }
         }
 
-        // Chức năng xuất file .xlsx về máy tính
+        // Chức năng xuất dữ liệu cấu trúc thành file Excel đuôi .xlsx thực tế
         function exportToExcel() {
             let sheets = luckysheet.getluckysheetfile();
-            if (!sheets || sheets.length === 0) return alert("Bảng tính trống!");
+            if (!sheets || sheets.length === 0) return alert("Bảng tính hiện tại trống!");
 
             let workbook = new ExcelJS.Workbook();
             sheets.forEach(sheet => {
@@ -259,7 +263,7 @@
                 }
             });
             workbook.xlsx.writeBuffer().then(buffer => {
-                saveAs(new Blob([buffer]), "Excel_Tu_Robot_Thong_Minh.xlsx");
+                saveAs(new Blob([buffer]), "Bao_Cao_Excel_Gemini.xlsx");
             });
         }
 
