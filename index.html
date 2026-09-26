@@ -101,7 +101,7 @@
         excelInstance = jspreadsheet(document.getElementById('spreadsheet'), {
             data: rowsData,
             columns: columns.map(c => ({ title: c, width: 130, type: 'text' })),
-            minDimensions:,
+            minDimensions:[10, 30],
             allowInsertRow: true,
             allowInsertColumn: true,
             allowDeleteRow: true,
