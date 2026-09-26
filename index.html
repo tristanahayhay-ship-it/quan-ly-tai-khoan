@@ -6,8 +6,8 @@
     <title>Hệ thống Excel Gemini Robot Siêu Cấp</title>
     
     <!-- Thư viện jspreadsheet (bảng tính) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.30/dist/jspreadsheet.css" type="text/css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsuites@1.11.3/dist/jsuites.css" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.30/dist/jspreadsheet.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsuites@1.11.3/dist/jsuites.css" />
     <script src="https://cdn.jsdelivr.net/npm/jsuites@1.11.3/dist/jsuites.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.30/dist/jspreadsheet.js"></script>
     
@@ -18,56 +18,194 @@
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body, html {
-            margin: 0; padding: 0;
-            width: 100%; height: 100%;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             overflow: hidden;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         #top-bar {
-            height: 50px; background-color: #107c41; color: white;
-            display: flex; align-items: center; padding: 0 20px;
-            font-size: 16px; font-weight: bold; justify-content: space-between;
+            height: 50px;
+            background-color: #107c41;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            font-size: 16px;
+            font-weight: bold;
+            justify-content: space-between;
             box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+            flex-shrink: 0;
         }
         #export-btn {
-            background-color: #ffffff; color: #107c41; border: 1px solid #ffffff;
-            padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;
+            background-color: #ffffff;
+            color: #107c41;
+            border: 1px solid #ffffff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
         }
-        #export-btn:hover { background-color: #f1f1f1; }
+        #export-btn:hover {
+            background-color: #f1f1f1;
+        }
         #main-container {
-            display: flex; position: absolute; top: 50px; bottom: 0; left: 0; right: 0;
+            display: flex;
+            position: absolute;
+            top: 50px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            gap: 0;
         }
-        #excel-zone { 
-            flex: 3; height: 100%; overflow: auto; padding: 20px; box-sizing: border-box; background-color: #f4f6f9;
+        #excel-zone {
+            flex: 1;
+            height: 100%;
+            overflow: auto;
+            padding: 20px;
+            background-color: #f4f6f9;
+            min-width: 400px;
+        }
+        #spreadsheet {
+            width: 100%;
+            height: auto;
+            background: white;
         }
         #ai-sidebar {
-            flex: 1; min-width: 340px; max-width: 420px;
-            background-color: #f8f9fa; border-left: 2px solid #dee2e6;
-            display: flex; flex-direction: column;
+            flex: 0 0 380px;
+            background-color: #f8f9fa;
+            border-left: 2px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
-        .ai-title { background-color: #1a73e8; color: white; padding: 12px 15px; font-weight: bold; }
-        .api-config-box { padding: 10px 15px; background-color: #e8f0fe; border-bottom: 1px solid #d2e3fc; font-size: 13px; }
-        .api-input { width: 100%; box-sizing: border-box; padding: 6px; margin-top: 5px; border: 1px solid #1a73e8; border-radius: 4px; }
-        #chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg { padding: 10px 12px; border-radius: 8px; max-width: 85%; font-size: 14px; line-height: 1.4; }
-        .user-msg { background-color: #e8f0fe; align-self: flex-end; color: #1a73e8; }
-        .bot-msg { background-color: #fff; border: 1px solid #dee2e6; align-self: flex-start; color: #212529; }
-        .chat-image-preview { max-width: 150px; border-radius: 4px; margin-top: 5px; display: block; }
-        .controls-area { border-top: 1px solid #dee2e6; background-color: #fff; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .upload-row { display: flex; gap: 10px; align-items: center; }
+        .ai-title {
+            background-color: #1a73e8;
+            color: white;
+            padding: 12px 15px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .api-config-box {
+            padding: 10px 15px;
+            background-color: #e8f0fe;
+            border-bottom: 1px solid #d2e3fc;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+        .api-input {
+            width: 100%;
+            padding: 6px;
+            margin-top: 5px;
+            border: 1px solid #1a73e8;
+            border-radius: 4px;
+        }
+        #chat-box {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .msg {
+            padding: 10px 12px;
+            border-radius: 8px;
+            max-width: 85%;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        .user-msg {
+            background-color: #e8f0fe;
+            align-self: flex-end;
+            color: #1a73e8;
+        }
+        .bot-msg {
+            background-color: #fff;
+            border: 1px solid #dee2e6;
+            align-self: flex-start;
+            color: #212529;
+        }
+        .chat-image-preview {
+            max-width: 150px;
+            border-radius: 4px;
+            margin-top: 5px;
+            display: block;
+        }
+        .controls-area {
+            border-top: 1px solid #dee2e6;
+            background-color: #fff;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .upload-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
         .upload-label {
-            background-color: #f1f3f4; color: #3c4043; padding: 6px 12px;
-            border-radius: 4px; cursor: pointer; font-size: 13px; font-weight: 600;
-            display: flex; align-items: center; gap: 5px; border: 1px solid #dadce0;
+            background-color: #f1f3f4;
+            color: #3c4043;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid #dadce0;
+            white-space: nowrap;
         }
-        .upload-label:hover { background-color: #e8eaed; }
-        #file-input { display: none; }
-        #file-status { font-size: 12px; color: #5f6368; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
-        .input-row { display: flex; gap: 8px; }
-        #user-input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
-        #send-btn { background-color: #1a73e8; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        #send-btn:hover { background-color: #1557b0; }
+        .upload-label:hover {
+            background-color: #e8eaed;
+        }
+        #file-input {
+            display: none;
+        }
+        #file-status {
+            font-size: 12px;
+            color: #5f6368;
+            font-style: italic;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+        #user-input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            outline: none;
+            min-width: 0;
+        }
+        #send-btn {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+        #send-btn:hover {
+            background-color: #1557b0;
+        }
     </style>
 </head>
 <body>
@@ -78,60 +216,72 @@
     </div>
 
     <div id="main-container">
-        <!-- Vùng hiển thị ô lưới Excel mới -->
+        <!-- Vùng hiển thị ô lưới Excel -->
         <div id="excel-zone">
             <div id="spreadsheet"></div>
         </div>
 
+        <!-- Sidebar AI -->
         <div id="ai-sidebar">
-            <div class="ai-title">🤖 Robot Gemini Copilot Intelligence</div>
+            <div class="ai-title">🤖 Robot Gemini Copilot</div>
             <div class="api-config-box">
-                <label for="api-key-field">🔑 <strong>Nhập Key Google Gemini của bạn:</strong></label>
-                <input type="password" id="api-key-field" class="api-input" placeholder="Dán mã Gemini API Key vào đây...">
+                <label for="api-key-field">🔑 <strong>Nhập Key Google Gemini:</strong></label>
+                <input type="password" id="api-key-field" class="api-input" placeholder="Dán API Key vào đây...">
             </div>
             <div id="chat-box">
-                <div class="msg bot-msg">Chào bạn! 👋 Tôi đã sửa xong hệ thống bảng tính Excel. Vui lòng dán Key Gemini của bạn vào ô trên, sau đó ra lệnh gì thì tôi làm nấy!</div>
+                <div class="msg bot-msg">👋 Chào bạn! Dán Key Gemini vào trên, rồi ra lệnh gì thì tôi làm nấy!</div>
             </div>
             <div class="controls-area">
                 <div class="upload-row">
-                    <label for="file-input" class="upload-label">📎 Đính kèm Ảnh</label>
+                    <label for="file-input" class="upload-label">📎 Ảnh</label>
                     <input type="file" id="file-input" accept="image/*" onchange="handleFileSelect()">
-                    <span id="file-status">Chưa có ảnh nào được chọn</span>
+                    <span id="file-status">Chưa chọn</span>
                 </div>
                 <div class="input-row">
-                    <input type="text" id="user-input" placeholder="Bảo gì làm nấy..." onkeypress="if(event.key === 'Enter') sendToAI()">
+                    <input type="text" id="user-input" placeholder="Nhập lệnh..." onkeypress="if(event.key === 'Enter') sendToAI()">
                     <button id="send-btn" onclick="sendToAI()">Gửi</button>
                 </div>
             </div>
         </div>
     </div>
+
     <script>
         let selectedFileBase64 = null;
         let selectedFileType = null;
         let tableInstance = null;
 
-        // Khởi tạo bảng tính trống kích thước mặc định (20 hàng x 10 cột)
+        // Khởi tạo bảng tính
         function initExcelTable() {
             let initialData = [];
             for (let i = 0; i < 20; i++) {
                 initialData.push(new Array(10).fill(''));
             }
             
-            tableInstance = jspreadsheet(document.getElementById('spreadsheet'), {
-                data: initialData,
-                minDimensions: [10, 20],
-                tableOverflow: true,
-                tableWidth: '100%',
-                tableHeight: '90%',
-                contextMenu: true // Bấm chuột phải để thêm hàng/cột thoải mái
-            });
+            try {
+                tableInstance = jspreadsheet(document.getElementById('spreadsheet'), {
+                    data: initialData,
+                    minDimensions: [10, 20],
+                    tableOverflow: true,
+                    tableWidth: '100%',
+                    allowInsertRow: true,
+                    allowInsertColumn: true,
+                    allowDeleteRow: true,
+                    allowDeleteColumn: true,
+                    contextMenu: true
+                });
+                console.log('✅ Bảng tính khởi tạo thành công');
+            } catch (error) {
+                console.error('❌ Lỗi khởi tạo bảng:', error);
+                document.getElementById('spreadsheet').innerHTML = '<p style="color: red; padding: 20px;">Lỗi tải bảng tính. Vui lòng reload trang.</p>';
+            }
         }
 
         window.onload = function() {
-            initExcelTable();
+            // Đợi một chút để các thư viện load xong
+            setTimeout(initExcelTable, 500);
         };
 
-        // Đọc và mã hóa ảnh thành Base64
+        // Đọc ảnh thành Base64
         function handleFileSelect() {
             const fileInput = document.getElementById('file-input');
             const fileStatus = document.getElementById('file-status');
@@ -140,22 +290,21 @@
             if (!file) {
                 selectedFileBase64 = null;
                 selectedFileType = null;
-                fileStatus.innerText = "Chưa có ảnh nào được chọn";
+                fileStatus.innerText = "Chưa chọn";
                 return;
             }
 
-            fileStatus.innerText = file.name;
+            fileStatus.innerText = file.name.substring(0, 10) + '...';
             selectedFileType = file.type;
 
             const reader = new FileReader();
             reader.onload = function (e) {
-                // Lấy chuỗi dữ liệu base64 thô
                 selectedFileBase64 = e.target.result.split(',')[1];
             };
             reader.readAsDataURL(file);
         }
 
-        // Xử lý gửi tin nhắn lệnh cấu trúc dữ liệu cho Gemini
+        // Gửi yêu cầu tới Gemini
         async function sendToAI() {
             let inputField = document.getElementById('user-input');
             let apiKeyField = document.getElementById('api-key-field');
@@ -168,10 +317,11 @@
                 return;
             }
 
+            // Hiển thị tin nhắn người dùng
             let chatBox = document.getElementById('chat-box');
             let userMsgDiv = document.createElement('div');
             userMsgDiv.className = 'msg user-msg';
-            userMsgDiv.innerText = query || "Đã gửi hình ảnh.";
+            userMsgDiv.innerText = query || "📸 Đã gửi hình ảnh.";
             
             if (selectedFileBase64) {
                 let imgPreview = document.createElement('img');
@@ -183,19 +333,21 @@
             chatBox.scrollTop = chatBox.scrollHeight;
 
             inputField.value = '';
-            let loadingId = appendMessage("🤖 Robot đang xử lý dữ liệu bảng...", 'bot-msg');
+            let loadingId = appendMessage("🤖 Robot đang xử lý...", 'bot-msg');
 
             try {
                 const promptInstruct = `${query || "Đọc bảng dữ liệu trong ảnh"}
 
-Bạn là trợ lý ảo điền dữ liệu vào bảng tính. Phân tích ảnh hoặc yêu cầu của người dùng, chuyển thông tin thành cấu trúc mảng JSON. Không giải thích chi tiết, chỉ trả về JSON thuần.
+Bạn là trợ lý ảo điền dữ liệu vào bảng tính Excel. Phân tích ảnh hoặc yêu cầu của người dùng, chuyển thông tin thành JSON.
 
-Định dạng JSON bắt buộc: [{"row": số_hàng, "col": số_cột, "val": "giá_trị"}]
+Trả về CHỈ mảng JSON theo định dạng này:
+[{"row": số_hàng, "col": số_cột, "val": "giá_trị"}]
 
-Lưu ý: 
-- Hàng đầu tiên (A1, B1...) có số_hàng là 0, số_cột là 0 (Cột A=0, B=1...). 
-- Các ô tính tổng hoặc công thức dùng chữ viết hoa như "=SUM(B2:B5)"
-- Trả về CHỈ JSON, không có chữ giải thích`;
+Quy tắc:
+- Hàng thứ nhất (A1, B1) = row 0
+- Cột A = col 0, Cột B = col 1, v.v.
+- Nếu là công thức Excel: val = "=SUM(B1:B5)"
+- Trả về CHỈNH JSON, không có chữ giải thích`;
 
                 let parts = [{ text: promptInstruct }];
                 if (selectedFileBase64) {
@@ -207,76 +359,108 @@ Lưu ý:
                     });
                 }
 
-                // Gọi tới mô hình gemini-2.0-flash của Google
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                // Gọi Gemini API với model mới nhất (gemini-1.5-flash)
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
                 
                 const response = await fetch(url, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: parts }] })
+                    body: JSON.stringify({ 
+                        contents: [{ parts: parts }],
+                        generationConfig: {
+                            temperature: 0.1,
+                            topP: 0.8,
+                        }
+                    })
                 });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+                }
 
                 const rawData = await response.json();
                 
                 if (rawData.error) {
-                    document.getElementById(loadingId).innerText = "❌ Lỗi: " + rawData.error.message;
+                    document.getElementById(loadingId).innerText = "❌ Lỗi Gemini: " + rawData.error.message;
+                    return;
+                }
+
+                if (!rawData.candidates || !rawData.candidates[0]) {
+                    document.getElementById(loadingId).innerText = "❌ Gemini không phản hồi";
                     return;
                 }
 
                 let aiTextResponse = rawData.candidates[0].content.parts[0].text.trim();
                 
+                // Bỏ markdown code blocks nếu có
                 if (aiTextResponse.includes("```")) {
-                    aiTextResponse = aiTextResponse.replace(/```json|```/g, "").trim();
+                    aiTextResponse = aiTextResponse.replace(/```json\n?|\n?```/g, "").trim();
                 }
+
+                console.log("Response từ Gemini:", aiTextResponse);
 
                 let cellDataArray = JSON.parse(aiTextResponse);
                 
-                if (Array.isArray(cellDataArray)) {
+                if (Array.isArray(cellDataArray) && cellDataArray.length > 0) {
                     cellDataArray.forEach(cell => {
-                        // Cập nhật giá trị trực tiếp vào ô lưới của hệ thống mới
-                        tableInstance.setValueFromCoords(cell.col, cell.row, cell.val);
+                        if (tableInstance && typeof cell.row !== 'undefined' && typeof cell.col !== 'undefined') {
+                            tableInstance.setValueFromCoords(cell.col, cell.row, cell.val);
+                        }
                     });
-                    document.getElementById(loadingId).innerText = "✅ Robot đã điền dữ liệu thành công vào bảng tính!";
+                    document.getElementById(loadingId).innerText = `✅ Đã điền ${cellDataArray.length} ô dữ liệu!`;
                 } else {
-                    document.getElementById(loadingId).innerText = "🤖 Robot phản hồi dữ liệu lỗi, vui lòng thử lại.";
+                    document.getElementById(loadingId).innerText = "⚠️ Không tìm được dữ liệu. Vui lòng thử lại.";
                 }
 
             } catch (error) {
-                document.getElementById(loadingId).innerText = "❌ Gặp lỗi khi xử lý dữ liệu. Vui lòng kiểm tra lại Key hoặc độ nét của ảnh!";
                 console.error("Chi tiết lỗi:", error);
+                document.getElementById(loadingId).innerText = "❌ Lỗi: " + error.message;
             } finally {
                 document.getElementById('file-input').value = "";
-                document.getElementById('file-status').innerText = "Chưa có ảnh nào được chọn";
+                document.getElementById('file-status').innerText = "Chưa chọn";
                 selectedFileBase64 = null; 
                 selectedFileType = null;
             }
         }
 
-        // Tải file .xlsx về máy tính
+        // Xuất file Excel
         function exportToExcel() {
-            if (!tableInstance) return alert("Bảng tính trống!");
-            let data = tableInstance.getData();
+            if (!tableInstance) {
+                alert("Bảng tính trống!");
+                return;
+            }
             
-            let workbook = new ExcelJS.Workbook();
-            let worksheet = workbook.addWorksheet('Báo Cáo');
+            try {
+                let data = tableInstance.getData();
+                
+                let workbook = new ExcelJS.Workbook();
+                let worksheet = workbook.addWorksheet('Báo Cáo');
 
-            data.forEach((row, rowIndex) => {
-                row.forEach((cellValue, colIndex) => {
-                    if (cellValue !== '') {
-                        let cellObj = worksheet.getCell(rowIndex + 1, colIndex + 1);
-                        if (typeof cellValue === 'string' && cellValue.startsWith('=')) {
-                            // Nếu là công thức, bỏ dấu = và đưa vào formula
-                            cellObj.value = { formula: cellValue.substring(1) };
-                        } else {
-                            cellObj.value = cellValue;
+                data.forEach((row, rowIndex) => {
+                    row.forEach((cellValue, colIndex) => {
+                        if (cellValue !== '' && cellValue !== null) {
+                            let cellObj = worksheet.getCell(rowIndex + 1, colIndex + 1);
+                            if (typeof cellValue === 'string' && cellValue.startsWith('=')) {
+                                cellObj.value = { formula: cellValue.substring(1) };
+                            } else {
+                                cellObj.value = cellValue;
+                            }
                         }
-                    }
+                    });
                 });
-            });
 
-            workbook.xlsx.writeBuffer().then(buffer => {
-                saveAs(new Blob([buffer]), "Báo_Cáo_Excel.xlsx");
-            });
+                workbook.xlsx.writeBuffer().then(buffer => {
+                    saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), "Báo_Cáo_Excel.xlsx");
+                    appendMessage("✅ File Excel đã được tải xuống!", 'bot-msg');
+                }).catch(err => {
+                    console.error("Lỗi xuất file:", err);
+                    appendMessage("❌ Lỗi khi xuất file Excel", 'bot-msg');
+                });
+            } catch (error) {
+                console.error("Lỗi:", error);
+                alert("Lỗi xuất file: " + error.message);
+            }
         }
 
         function appendMessage(text, className) {
