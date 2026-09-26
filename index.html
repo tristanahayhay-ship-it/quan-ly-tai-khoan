@@ -6,65 +6,65 @@
     <title>AI Co-Pilot Spreadsheet - Powered by Google Gemini</title>
     <!-- Nhúng thư viện SheetJS để đọc và xuất file Excel -->
     <script src="https://jsdelivr.net"></script>
-    <!-- Liên kết tới file giao diện CSS riêng biệt -->
-    <link rel="stylesheet" href="style.css">
+    <!-- Nhúng file phong cách giao diện riêng biệt -->
+    <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-<header>
-    <h2>📊 AI Co-Pilot Spreadsheet (Google Gemini Edition)</h2>
-    <div class="config-area">
-        <label for="apiKey">Gemini API Key:</label>
-        <input type="password" id="apiKey" placeholder="Nhập khóa Gemini tại đây..." />
-    </div>
-</header>
-
-<div class="main-container">
-    <div class="sidebar">
-        <h3>💬 Ra lệnh cho Robot</h3>
-        <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Hệ thống chạy bằng Google Gemini hoàn toàn miễn phí.</p>
-        <div class="chat-history" id="chatHistory">
-            <div class="msg ai">Chào sếp! Hệ thống đã được cấu trúc lại gọn gàng. Sếp hãy nhập khóa API ở góc trên rồi bắt đầu ra lệnh nhé!</div>
+    <header>
+        <h2>📊 AI Co-Pilot Spreadsheet (Google Gemini Edition)</h2>
+        <div class="config-area">
+            <label for="apiKey">Gemini API Key:</label>
+            <input type="password" id="apiKey" placeholder="Nhập khóa Gemini tại đây..." />
         </div>
-        
-        <div class="input-group">
-            <textarea id="promptInput" placeholder="Bảo Gemini xử lý bảng tính hiện tại..."></textarea>
-            <input type="file" id="imageInput" accept="image/*" style="display: none;">
-            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv, .txt" style="display: none;">
-            <div class="btn-row">
-                <button class="btn-media" id="btnSelectImage">📷 Ảnh</button>
-                <button class="btn-media" id="btnSelectFile">📁 File</button>
-                <button class="btn-send" id="btnSend">Gửi lệnh</button>
+    </header>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <h3>💬 Ra lệnh cho Robot</h3>
+            <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Hệ thống chạy bằng Google Gemini hoàn toàn miễn phí. Hãy nhập lệnh xử lý nhé!</p>
+            <div class="chat-history" id="chatHistory">
+                <div class="msg ai">Chào sếp! Giao diện đã được chia nhỏ thành 3 file chuẩn hóa. Sếp hãy nhập khóa API ở góc trên rồi thử gửi lệnh nhé!</div>
             </div>
-            <img id="imgPreview" class="preview-img" style="display: none;">
-            <div id="fileInfoBox" class="file-info"></div>
+            
+            <div class="input-group">
+                <textarea id="promptInput" placeholder="Bảo Gemini xử lý bảng tính hiện tại..."></textarea>
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                <input type="file" id="fileInput" accept=".xlsx, .xls, .csv, .txt" style="display: none;">
+                <div class="btn-row">
+                    <button class="btn-media" id="btnSelectImage">📷 Ảnh</button>
+                    <button class="btn-media" id="btnSelectFile">📁 File</button>
+                    <button class="btn-send" id="btnSend">Gửi lệnh</button>
+                </div>
+                <img id="imgPreview" class="preview-img" style="display: none;">
+                <div id="fileInfoBox" class="file-info"></div>
+            </div>
+            
+            <div class="loading" id="loadingState">Gemini đang phân tích bảng và tính toán...</div>
+            <button class="btn-export" id="btnExport">📥 Xuất file Excel (.xlsx)</button>
         </div>
-        
-        <div class="loading" id="loadingState">Gemini đang phân tích bảng và tính toán...</div>
-        <button class="btn-export" id="btnExport">📥 Xuất file Excel (.xlsx)</button>
+
+        <div class="content">
+            <div class="table-toolbar">
+                <button class="btn-tool" id="btnAddRow">➕ Thêm 1 Hàng</button>
+                <button class="btn-tool" id="btnAddCol">➕ Thêm 1 Cột</button>
+                <button class="btn-tool" id="btnClearTable" style="color: #c62828;">🧹 Xóa Trống Bảng</button>
+            </div>
+            <div class="table-container">
+                <table id="spreadsheet">
+                    <thead><tr><th contenteditable="true">Cột 1</th><th contenteditable="true">Cột 2</th><th contenteditable="true">Cột 3</th><th contenteditable="true">Cột 4</th></tr></thead>
+                    <tbody>
+                        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                        <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
-    <div class="content">
-        <div class="table-toolbar">
-            <button class="btn-tool" id="btnAddRow">➕ Thêm 1 Hàng</button>
-            <button class="btn-tool" id="btnAddCol">➕ Thêm 1 Cột</button>
-            <button class="btn-tool" id="btnClearTable" style="color: #c62828;">🧹 Xóa Trống Bảng</button>
-        </div>
-        <div class="table-container">
-            <table id="spreadsheet">
-                <thead><tr><th contenteditable="true">Cột 1</th><th contenteditable="true">Cột 2</th><th contenteditable="true">Cột 3</th><th contenteditable="true">Cột 4</th></tr></thead>
-                <tbody>
-                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
-<!-- Liên kết tới file xử lý JavaScript riêng biệt -->
-<script src="script.js"></script>
+    <!-- Nhúng file xử lý logic và API riêng biệt -->
+    <script src="script.js"></script>
 </body>
 </html>
 * { 
@@ -287,8 +287,6 @@ td:focus {
     font-style: italic; 
 }
 const apiKeyInput = document.getElementById('apiKey');
-
-// Tự động khôi phục API Key từ bộ nhớ trình duyệt nếu có
 if (localStorage.getItem('geminiAiKey')) apiKeyInput.value = localStorage.getItem('geminiAiKey');
 apiKeyInput.addEventListener('input', () => localStorage.setItem('geminiAiKey', apiKeyInput.value.trim()));
 
@@ -299,9 +297,8 @@ let extractedFileText = "";
 document.getElementById('btnSelectImage').addEventListener('click', () => document.getElementById('imageInput').click());
 document.getElementById('btnSelectFile').addEventListener('click', () => document.getElementById('fileInput').click());
 
-// Xử lý tải ảnh lên (Tách Base64 và MimeType chuẩn)
 document.getElementById('imageInput').addEventListener('change', function(e) {
-    const file = e.target.files[0]; if (!file) return;
+    const files = e.target.files; if (!files || files.length === 0) return;
     const reader = new FileReader();
     reader.onload = function(evt) {
         const fullBase64 = evt.target.result;
@@ -313,12 +310,12 @@ document.getElementById('imageInput').addEventListener('change', function(e) {
         base64ImageString = fullBase64.substring(fullBase64.indexOf(",") + 1);
         extractedFileText = "";
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(files[0]);
 });
 
-// Xử lý tải các định dạng File Excel hoặc Văn bản vào phần mềm
 document.getElementById('fileInput').addEventListener('change', function(e) {
-    const file = e.target.files[0]; if (!file) return;
+    const files = e.target.files; if (!files || files.length === 0) return;
+    const file = files[0];
     const reader = new FileReader();
     
     if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
@@ -349,7 +346,6 @@ function showFileInfo(text) {
     box.style.display = 'block';
 }
 
-// Các nút tiện ích tăng/giảm số cột và số hàng của bảng
 document.getElementById('btnAddRow').addEventListener('click', () => {
     const tbody = document.querySelector('#spreadsheet tbody');
     const colCount = document.querySelectorAll('#spreadsheet thead th').length;
@@ -403,7 +399,6 @@ function renderTableFromData(data) {
     }
 }
 
-// Bấm nút gửi lệnh lên hệ thống AI Gemini của Google
 document.getElementById('btnSend').addEventListener('click', async () => {
     const apiKey = apiKeyInput.value.trim();
     const promptText = document.getElementById('promptInput').value.trim();
@@ -448,7 +443,7 @@ document.getElementById('btnSend').addEventListener('click', async () => {
         const result = await response.json();
         loading.style.display = 'none';
 
-        const replyText = result.candidates[0].content.parts[0].text;
+        const replyText = result.candidates.content.parts.text;
         const parsedData = JSON.parse(replyText.trim());
 
         appendMessage(parsedData.analysis || "Đã xử lý bảng dữ liệu xong!", 'ai');
@@ -456,14 +451,13 @@ document.getElementById('btnSend').addEventListener('click', async () => {
             renderTableFromData(parsedData.table);
         }
 
-        // Reset bộ nhớ đệm
         base64ImageString = ""; base64ImageMime = ""; extractedFileText = "";
         document.getElementById('imgPreview').style.display = 'none';
         document.getElementById('fileInfoBox').style.display = 'none';
 
     } catch (err) {
         loading.style.display = 'none';
-        appendMessage(`Lỗi hệ thống: ${err.message}. Hãy kiểm tra lại API Key hoặc tắt tiện ích chặn quảng cáo (Adblock).`, 'error');
+        appendMessage(`Lỗi hệ thống: ${err.message}. Hãy kiểm tra lại API Key hoặc tắt chặn quảng cáo (Adblock).`, 'error');
     }
 });
 
@@ -476,7 +470,6 @@ function appendMessage(text, sender) {
     history.scrollTop = history.scrollHeight;
 }
 
-// Tính năng tải dữ liệu dạng .xlsx về máy tính
 document.getElementById('btnExport').addEventListener('click', () => {
     const currentTable = getTableData();
     const dataArr = [currentTable.headers, ...currentTable.rows];
