@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Ultimate Spreadsheet - Bảo Sao Làm Vậy</title>
+    <title>AI Co-Pilot Spreadsheet - Cả Người & Robot Sửa Bảng</title>
     <script src="https://jsdelivr.net"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -31,17 +31,20 @@
         .btn-export { background: #0078d4; width: 100%; font-size: 14px; padding: 12px; }
         .btn-export:hover { background: #005a9e; }
         .content { flex: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; }
+        .table-toolbar { display: flex; gap: 10px; margin-bottom: 10px; }
+        .btn-tool { background: #f3f3f3; color: #333; border: 1px solid #ccc; font-size: 12px; padding: 6px 12px; font-weight: normal; }
+        .btn-tool:hover { background: #e1e1e1; }
         .table-container { flex: 1; background: white; border: 1px solid #d0d0d0; border-radius: 4px; overflow: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         table { border-collapse: collapse; min-width: 100%; font-size: 14px; }
-        th, td { border: 1px solid #d0d0d0; padding: 8px 12px; text-align: left; min-width: 100px; }
+        th, td { border: 1px solid #d0d0d0; padding: 6px 10px; text-align: left; min-width: 110px; outline: none; }
         th { background-color: #f3f3f3; font-weight: 600; position: sticky; top: 0; z-index: 10; color: #444; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
+        td:focus { background-color: #e8f5e9; border: 2px solid #107c41; padding: 5px 9px; }
         .loading { display: none; text-align: center; color: #666; font-size: 13px; margin-bottom: 8px; font-style: italic; }
     </style>
 </head>
 <body>
 <header>
-    <h2>📊 AI Ultimate Spreadsheet Editor</h2>
+    <h2>📊 AI Co-Pilot Spreadsheet (Editable)</h2>
     <div class="config-area">
         <label for="apiKey">OpenAI API Key:</label>
         <input type="password" id="apiKey" placeholder="sk-..." />
@@ -50,39 +53,42 @@
 <div class="main-container">
     <div class="sidebar">
         <h3>💬 Ra lệnh cho AI</h3>
-        <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Bạn có thể gửi ảnh mẫu hoặc đính kèm tệp Excel/CSV/TXT để AI tự đọc.</p>
+        <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Bạn có thể gõ trực tiếp vào bảng hoặc dán dữ liệu Excel (Ctrl+V) vào ô bất kỳ.</p>
         <div class="chat-history" id="chatHistory">
-            <div class="msg ai">Sếp cần xử lý gì ạ? Sếp có thể nhập lệnh, chọn một bức ảnh minh họa, hoặc tải lên một file dữ liệu thô (Excel, CSV, TXT) nhé!</div>
+            <div class="msg ai">Sếp thích tự tay sửa hay bảo em làm đều được nhé! Hãy click đúp vào ô để sửa, dán bảng Excel bằng Ctrl+V hoặc gõ lệnh cho em ở dưới.</div>
         </div>
         
         <div class="input-group">
-            <textarea id="promptInput" placeholder="Nhập lệnh của bạn tại đây..."></textarea>
-            
-            <!-- Các ô input ẩn để nhận file -->
+            <textarea id="promptInput" placeholder="Bảo AI xử lý bảng tính hiện tại..."></textarea>
             <input type="file" id="imageInput" accept="image/*" style="display: none;">
             <input type="file" id="fileInput" accept=".xlsx, .xls, .csv, .txt" style="display: none;">
-            
             <div class="btn-row">
                 <button class="btn-media" id="btnSelectImage">📷 Ảnh</button>
-                <button class="btn-media" id="btnSelectFile">📁 Tệp dữ liệu</button>
-                <button class="btn-send" id="btnSend">Gửi yêu cầu</button>
+                <button class="btn-media" id="btnSelectFile">📁 File</button>
+                <button class="btn-send" id="btnSend">Gửi lệnh</button>
             </div>
             <img id="imgPreview" class="preview-img" style="display: none;">
             <div id="fileInfoBox" class="file-info"></div>
         </div>
         
-        <div class="loading" id="loadingState">AI đang đọc dữ liệu và xử lý bảng tính...</div>
+        <div class="loading" id="loadingState">AI đang phân tích bảng và xử lý...</div>
         <button class="btn-export" id="btnExport">📥 Xuất file Excel (.xlsx)</button>
     </div>
 
     <div class="content">
+        <div class="table-toolbar">
+            <button class="btn-tool" id="btnAddRow">➕ Thêm 1 Hàng</button>
+            <button class="btn-tool" id="btnAddCol">➕ Thêm 1 Cột</button>
+            <button class="btn-tool" id="btnClearTable" style="color: #c62828;">🧹 Xóa Trống Bảng</button>
+        </div>
         <div class="table-container">
             <table id="spreadsheet">
-                <thead><tr><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr></thead>
+                <thead><tr><th contenteditable="true">Cột 1</th><th contenteditable="true">Cột 2</th><th contenteditable="true">Cột 3</th><th contenteditable="true">Cột 4</th></tr></thead>
                 <tbody>
-                    <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
-                    <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
-                    <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td></tr>
+                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
+                    <tr><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr>
                 </tbody>
             </table>
         </div>
@@ -93,103 +99,160 @@
     if (localStorage.getItem('openAiKey')) apiKeyInput.value = localStorage.getItem('openAiKey');
     apiKeyInput.addEventListener('input', () => localStorage.setItem('openAiKey', apiKeyInput.value.trim()));
 
-    let currentTableData = { headers: ["A", "B", "C", "D", "E"], rows: [["", "", "", "", ""], ["", "", "", "", ""], ["", "", "", "", ""]] };
     let base64Image = "";
     let extractedFileText = "";
 
-    // Xử lý nút bấm kích hoạt ô chọn file
     document.getElementById('btnSelectImage').addEventListener('click', () => document.getElementById('imageInput').click());
     document.getElementById('btnSelectFile').addEventListener('click', () => document.getElementById('fileInput').click());
     
-    // Xử lý khi chọn ảnh
     document.getElementById('imageInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
+        const file = e.target.files; if (!file) return;
         const reader = new FileReader();
-        reader.onload = function(event) {
-            base64Image = event.target.result;
-            const preview = document.getElementById('imgPreview');
-            preview.src = base64Image; preview.style.display = 'block';
-            document.getElementById('fileInfoBox').style.display = 'none';
-            extractedFileText = ""; // Xóa dữ liệu file nếu đổi sang gửi ảnh
+        reader.onload = function(evt) {
+            base64Image = evt.target.result;
+            document.getElementById('imgPreview').src = base64Image;
+            document.getElementById('imgPreview').style.display = 'block';
+            document.getElementById('fileInfoBox').style.display = 'none'; extractedFileText = "";
         };
         reader.readAsDataURL(file);
     });
 
-    // Xử lý khi chọn Tệp (Excel/CSV/TXT)
     document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        const fileInfoBox = document.getElementById('fileInfoBox');
-        fileInfoBox.innerText = `📄 Đang đính kèm: ${file.name}`;
-        fileInfoBox.style.display = 'block';
-        document.getElementById('imgPreview').style.display = 'none';
-        base64Image = ""; // Xóa dữ liệu ảnh nếu đổi sang gửi file
+        const file = e.target.files; if (!file) return;
+        document.getElementById('fileInfoBox').innerText = `📄 Đang đính kèm: ${file.name}`;
+        document.getElementById('fileInfoBox').style.display = 'block';
+        document.getElementById('imgPreview').style.display = 'none'; base64Image = "";
 
         const reader = new FileReader();
-        const extension = file.name.split('.').pop().toLowerCase();
-
-        if (extension === 'xlsx' || extension === 'xls') {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext === 'xlsx' || ext === 'xls') {
             reader.onload = function(evt) {
                 const data = new Uint8Array(evt.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                const json = XLSX.utils.sheet_to_json(worksheet, {header: 1});
-                extractedFileText = "Nội dung trích xuất từ file Excel:\n" + JSON.stringify(json);
+                const wb = XLSX.read(data, {type: 'array'});
+                const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames], {header: 1});
+                extractedFileText = "Dữ liệu đính kèm từ file Excel:\n" + JSON.stringify(json);
             };
             reader.readAsArrayBuffer(file);
         } else {
-            reader.onload = function(evt) {
-                extractedFileText = "Nội dung trích xuất từ file văn bản:\n" + evt.target.result;
-            };
+            reader.onload = function(evt) { extractedFileText = "Dữ liệu file văn bản:\n" + evt.target.result; };
             reader.readAsText(file);
         }
     });
+    function getCurrentTableDataFromUI() {
+        const table = document.getElementById('spreadsheet');
+        const headers = [];
+        table.querySelectorAll('thead th').forEach(th => headers.push(th.innerText.trim()));
+        
+        const rows = [];
+        table.querySelectorAll('tbody tr').forEach(tr => {
+            const rowData = [];
+            tr.querySelectorAll('td').forEach(td => rowData.push(td.innerText.trim()));
+            rows.push(rowData);
+        });
+        return { headers, rows };
+    }
 
     function renderTable(data) {
         const table = document.getElementById('spreadsheet');
         table.innerHTML = '';
+        
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
-        data.headers.forEach(h => { const th = document.createElement('th'); th.innerText = h; headerRow.appendChild(th); });
+        data.headers.forEach(h => {
+            const th = document.createElement('th'); th.setAttribute('contenteditable', 'true');
+            th.innerText = h; headerRow.appendChild(th);
+        });
         thead.appendChild(headerRow); table.appendChild(thead);
 
         const tbody = document.createElement('tbody');
         data.rows.forEach(r => {
             const row = document.createElement('tr');
-            r.forEach(cell => { const td = document.createElement('td'); td.innerText = cell ?? ''; row.appendChild(td); });
+            r.forEach(cell => {
+                const td = document.createElement('td'); td.setAttribute('contenteditable', 'true');
+                td.innerText = cell ?? ''; row.appendChild(td);
+            });
             tbody.appendChild(row);
         });
-        table.appendChild(tbody); currentTableData = data;
+        table.appendChild(tbody);
     }
+
+    document.getElementById('spreadsheet').addEventListener('paste', function(e) {
+        e.preventDefault();
+        const text = (e.originalEvent || e).clipboardData.getData('text/plain');
+        const rows = text.split('\n').map(row => row.split('\t'));
+        
+        const targetTd = e.target;
+        if (targetTd.tagName !== 'TD') return;
+        
+        const targetTr = targetTd.parentNode;
+        const startRowIdx = Array.from(targetTr.parentNode.children).indexOf(targetTr);
+        const startColIdx = Array.from(targetTr.children).indexOf(targetTd);
+        const tbody = targetTr.parentNode;
+        
+        rows.forEach((row, rOffset) => {
+            if (!row.join('').trim()) return;
+            let currentTr = tbody.children[startRowIdx + rOffset];
+            if (!currentTr) {
+                currentTr = document.createElement('tr');
+                const colCount = tbody.parentNode.querySelectorAll('thead th').length;
+                for(let i=0; i<colCount; i++) {
+                    const td = document.createElement('td'); td.setAttribute('contenteditable', 'true');
+                    currentTr.appendChild(td);
+                }
+                tbody.appendChild(currentTr);
+            }
+            row.forEach((cellValue, cOffset) => {
+                const currentTd = currentTr.children[startColIdx + cOffset];
+                if (currentTd) currentTd.innerText = cellValue.trim();
+            });
+        });
+    });
+    document.getElementById('btnAddRow').addEventListener('click', () => {
+        const tbody = document.querySelector('#spreadsheet tbody');
+        const colCount = document.querySelectorAll('#spreadsheet thead th').length || 4;
+        const tr = document.createElement('tr');
+        for(let i=0; i<colCount; i++) {
+            const td = document.createElement('td'); td.setAttribute('contenteditable', 'true'); tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('btnAddCol').addEventListener('click', () => {
+        const th = document.createElement('th'); th.setAttribute('contenteditable', 'true');
+        th.innerText = `Cột ${document.querySelectorAll('#spreadsheet thead th').length + 1}`;
+        document.querySelector('#spreadsheet thead tr').appendChild(th);
+        
+        document.querySelectorAll('#spreadsheet tbody tr').forEach(tr => {
+            const td = document.createElement('td'); td.setAttribute('contenteditable', 'true'); tr.appendChild(td);
+        });
+    });
+
+    document.getElementById('btnClearTable').addEventListener('click', () => {
+        renderTable({ headers: ["Cột 1", "Cột 2", "Cột 3", "Cột 4"], rows: [["","","",""],["","","",""]] });
+    });
 
     document.getElementById('btnSend').addEventListener('click', async () => {
         const prompt = document.getElementById('promptInput').value.trim();
         const apiKey = apiKeyInput.value.trim();
         if (!apiKey) return alert('Vui lòng nhập OpenAI API Key!');
-        if (!prompt && !base64Image && !extractedFileText) return alert('Vui lòng nhập lệnh, chọn ảnh hoặc chọn file!');
 
-        let displayMsg = prompt || (base64Image ? "Đã gửi một hình ảnh minh họa." : "Đã gửi một tệp dữ liệu.");
-        addMessage(displayMsg, 'user');
+        const tableState = getCurrentTableDataFromUI();
+        addMessage(prompt || "Yêu cầu AI phân tích dữ liệu bảng hiện tại.", 'user');
         
         document.getElementById('promptInput').value = '';
         document.getElementById('imgPreview').style.display = 'none';
         document.getElementById('fileInfoBox').style.display = 'none';
         document.getElementById('loadingState').style.display = 'block';
 
-        const systemInstruction = `You are an AI assistant that controls a spreadsheet editor. Your job is to output a raw JSON object that completely replaces or modifies the current table state based on the user's instructions/files. Strictly return ONLY raw valid JSON, no markdown blocks, no chat. Current: ${JSON.stringify(currentTableData)}. Output schema: {"headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]]}`;
+        const systemInstruction = `You are an AI data assistant. Analyze the user's current table data and apply their modifications. You must return ONLY a raw valid JSON object replacing/updating the spreadsheet. No chat, no markdown format blocks.
+Current Table Data on screen: ${JSON.stringify(tableState)}.
+Output JSON schema: {"headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]]}`;
 
         let finalPromptText = prompt;
-        if (extractedFileText) {
-            finalPromptText = `${prompt}\n\n[DỮ LIỆU ĐÍNH KÈM TỪ FILE DƯỚI ĐÂY LÀM THEO CÂU LỆNH TRÊN]:\n${extractedFileText}`;
-        }
+        if (extractedFileText) finalPromptText = `${prompt}\n\n[Dữ liệu đính kèm thêm]:\n${extractedFileText}`;
 
-        let userContent = [{ type: "text", text: finalPromptText || "Hãy xử lý dữ liệu đính kèm và vẽ thành bảng tính." }];
-        if (base64Image) {
-            userContent.push({ type: "image_url", image_url: { url: base64Image } });
-        }
+        let userContent = [{ type: "text", text: finalPromptText || "Hãy phân tích bảng dữ liệu hiện tại." }];
+        if (base64Image) userContent.push({ type: "image_url", image_url: { url: base64Image } });
 
         try {
             const response = await fetch('https://openai.com', {
@@ -205,7 +268,6 @@
             const result = await response.json();
             document.getElementById('loadingState').style.display = 'none';
             base64Image = ""; extractedFileText = "";
-            document.getElementById('imageInput').value = ""; document.getElementById('fileInput').value = "";
 
             if (result.error) return addMessage(`Lỗi: ${result.error.message}`, 'error');
 
@@ -215,7 +277,7 @@
 
             const parsedData = JSON.parse(aiContent.trim());
             renderTable(parsedData);
-            addMessage('Đã đọc dữ liệu và cập nhật bảng tính mới thành công!', 'ai');
+            addMessage('Đã đồng bộ và cập nhật bảng tính mới cùng sếp!', 'ai');
         } catch (err) {
             document.getElementById('loadingState').style.display = 'none';
             addMessage(`Lỗi hệ thống: ${err.message}`, 'error');
@@ -230,8 +292,9 @@
     }
 
     document.getElementById('btnExport').addEventListener('click', () => {
+        const tableState = getCurrentTableDataFromUI();
         const wb = XLSX.utils.book_new();
-        const dataArray = [currentTableData.headers, ...currentTableData.rows];
+        const dataArray = [tableState.headers, ...tableState.rows];
         const ws = XLSX.utils.aoa_to_sheet(dataArray);
         XLSX.utils.book_append_sheet(wb, ws, "AI_Spreadsheet");
         XLSX.writeFile(wb, "ai_spreadsheet_export.xlsx");
