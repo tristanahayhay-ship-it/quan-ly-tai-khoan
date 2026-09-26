@@ -5,10 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Excel AI Copilot - Hệ Thống Bảng Tính Thông Minh</title>
     
-    <!-- JSpreadsheet CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.30/dist/jspreadsheet.css"/>
-    <!-- JSuites CSS (phụ thuộc của JSpreadsheet) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsuites@1.11.3/dist/jsuites.css"/>
+    <!-- Handsontable (thay thế jspreadsheet - ổn định hơn) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css">
     
     <style>
         * {
@@ -86,8 +84,10 @@
             height: 100%;
             background-color: #f5f5f5;
             padding: 15px;
-            overflow: auto;
+            overflow: hidden;
             border-right: 1px solid #e0e0e0;
+            display: flex;
+            flex-direction: column;
         }
 
         #spreadsheetContainer {
@@ -97,6 +97,10 @@
             border-radius: 4px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
             overflow: hidden;
+        }
+
+        .htCore {
+            font-size: 13px;
         }
 
         /* Sidebar */
@@ -282,10 +286,6 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
-        .uploadLabel:active {
-            background-color: #dadce0;
-        }
-
         #fileInput {
             display: none;
         }
@@ -350,7 +350,7 @@
             opacity: 0.6;
         }
 
-        /* Scrollbar Styling */
+        /* Scrollbar */
         #chatBox::-webkit-scrollbar {
             width: 6px;
         }
@@ -366,42 +366,6 @@
 
         #chatBox::-webkit-scrollbar-thumb:hover {
             background: #999;
-        }
-
-        #excelZone::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-
-        #excelZone::-webkit-scrollbar-thumb {
-            background: #999;
-            border-radius: 3px;
-        }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            #excelZone {
-                flex: 0 0 65%;
-            }
-            #aiSidebar {
-                flex: 0 0 35%;
-                min-width: 300px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            #mainContainer {
-                flex-direction: column;
-            }
-            #excelZone {
-                flex: 0 0 50%;
-                width: 100%;
-            }
-            #aiSidebar {
-                flex: 0 0 50%;
-                width: 100%;
-                min-width: auto;
-            }
         }
     </style>
 </head>
@@ -446,15 +410,15 @@
             <!-- Controls Area -->
             <div id="controlsArea">
                 <div class="uploadRow">
-                    <label for="fileInput" class="uploadLabel">📎 Đính kèm Ảnh</label>
+                    <label for="fileInput" class="uploadLabel">📎 Ảnh</label>
                     <input type="file" id="fileInput" accept="image/*"/>
-                    <span id="fileStatus">Chưa chọn ảnh</span>
+                    <span id="fileStatus">Chưa chọn</span>
                 </div>
                 <div class="inputRow">
                     <input 
                         type="text" 
                         id="userInput" 
-                        placeholder="Nhập lệnh hoặc yêu cầu..."
+                        placeholder="Nhập lệnh..."
                         autocomplete="off"
                     />
                     <button id="sendBtn">Gửi</button>
@@ -463,9 +427,8 @@
         </div>
     </div>
 
-    <!-- JSpreadsheet JS -->
-    <script src="https://cdn.jsdelivr.net/npm/jsuites@1.11.3/dist/jsuites.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.30/dist/jspreadsheet.min.js"></script>
+    <!-- Handsontable JS -->
+    <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
 
     <!-- ExcelJS -->
     <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
@@ -491,13 +454,6 @@
         // UTILITY FUNCTIONS
         // ============================================
 
-        /**
-         * Thêm tin nhắn vào chat box
-         * @param {string} text - Nội dung tin nhắn
-         * @param {string} type - 'user' hoặc 'bot'
-         * @param {string} status - 'normal', 'error', 'success'
-         * @returns {HTMLElement} - Element của tin nhắn
-         */
         function addChatMessage(text, type = 'bot', status = 'normal') {
             const chatBox = document.getElementById('chatBox');
             const messageDiv = document.createElement('div');
@@ -517,11 +473,6 @@
             return messageDiv;
         }
 
-        /**
-         * Thêm hình ảnh vào chat
-         * @param {string} base64 - Dữ liệu Base64 của ảnh
-         * @param {string} mimeType - Loại MIME
-         */
         function addChatImage(base64, mimeType) {
             const chatBox = document.getElementById('chatBox');
             const messageDiv = chatBox.lastElementChild;
@@ -536,12 +487,6 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        /**
-         * Cập nhật nội dung tin nhắn
-         * @param {HTMLElement} messageDiv - Element của tin nhắn
-         * @param {string} text - Nội dung mới
-         * @param {string} status - Trạng thái
-         */
         function updateChatMessage(messageDiv, text, status = 'normal') {
             const bubble = messageDiv.querySelector('.chatBubble');
             bubble.textContent = text;
@@ -552,71 +497,31 @@
         }
 
         // ============================================
-        // SPREADSHEET INITIALIZATION
+        // SPREADSHEET INITIALIZATION (HANDSONTABLE)
         // ============================================
 
         function initSpreadsheet() {
             try {
                 const container = document.getElementById('spreadsheetContainer');
-
-                appState.spreadsheet = jspreadsheet(container, {
-                    data: Array(25).fill(null).map(() => Array(10).fill('')),
-                    minDimensions: [10, 25],
-                    tableOverflow: true,
-                    tableWidth: '100%',
-                    tableHeight: '100%',
-                    columnWidth: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
-                    allowInsertRow: true,
-                    allowInsertColumn: true,
-                    allowDeleteRow: true,
-                    allowDeleteColumn: true,
-                    allowRenameColumn: false,
-                    contextMenu: function(obj, x, y, e) {
-                        // Menu chuột phải tùy chỉnh
-                        return [
-                            {
-                                title: 'Chèn hàng trên',
-                                onclick: function() {
-                                    jspreadsheet.insertRow(1, false, y);
-                                }
-                            },
-                            {
-                                title: 'Chèn hàng dưới',
-                                onclick: function() {
-                                    jspreadsheet.insertRow(1, true, y);
-                                }
-                            },
-                            {
-                                title: 'Xóa hàng',
-                                onclick: function() {
-                                    jspreadsheet.deleteRow(y);
-                                }
-                            },
-                            { type: 'line' },
-                            {
-                                title: 'Chèn cột trái',
-                                onclick: function() {
-                                    jspreadsheet.insertColumn(1, false, x);
-                                }
-                            },
-                            {
-                                title: 'Chèn cột phải',
-                                onclick: function() {
-                                    jspreadsheet.insertColumn(1, true, x);
-                                }
-                            },
-                            {
-                                title: 'Xóa cột',
-                                onclick: function() {
-                                    jspreadsheet.deleteColumn(x);
-                                }
-                            }
-                        ];
-                    }
+                
+                appState.spreadsheet = new Handsontable(container, {
+                    data: Array(30).fill(null).map(() => Array(12).fill('')),
+                    rowHeaders: true,
+                    colHeaders: true,
+                    height: 'auto',
+                    width: 'auto',
+                    stretchH: 'all',
+                    licenseKey: 'non-commercial-and-evaluation',
+                    contextMenu: true,
+                    copyPaste: true,
+                    undo: true,
+                    dropdownMenu: true,
+                    filters: true,
+                    columnSorting: true
                 });
 
-                console.log('✅ Bảng tính đã khởi tạo thành công');
-                addChatMessage('✅ Bảng tính sẵn sàng! Hãy dán API Key và bắt đầu sử dụng.', 'bot', 'success');
+                console.log('✅ Bảng tính Handsontable đã khởi tạo thành công');
+                addChatMessage('✅ Bảng tính sẵn sàng! Hãy dán API Key và bắt đầu.', 'bot', 'success');
 
             } catch (error) {
                 console.error('❌ Lỗi khởi tạo bảng tính:', error);
@@ -634,34 +539,34 @@
 
             if (!file) {
                 appState.selectedFile = { base64: null, mimeType: null, name: null };
-                fileStatus.textContent = 'Chưa chọn ảnh';
+                fileStatus.textContent = 'Chưa chọn';
                 return;
             }
 
             if (!file.type.startsWith('image/')) {
-                fileStatus.textContent = 'Vui lòng chọn file ảnh!';
-                alert('Vui lòng chọn file ảnh hợp lệ!');
+                fileStatus.textContent = 'File không hợp lệ!';
+                alert('Vui lòng chọn file ảnh!');
                 return;
             }
 
-            fileStatus.textContent = file.name.substring(0, 20) + (file.name.length > 20 ? '...' : '');
+            fileStatus.textContent = file.name.substring(0, 15) + (file.name.length > 15 ? '...' : '');
             appState.selectedFile.mimeType = file.type;
             appState.selectedFile.name = file.name;
 
             const reader = new FileReader();
             reader.onload = function(event) {
                 appState.selectedFile.base64 = event.target.result.split(',')[1];
-                console.log('✅ Ảnh đã được load thành công');
+                console.log('✅ Ảnh đã load');
             };
             reader.onerror = function() {
-                fileStatus.textContent = 'Lỗi đọc file!';
-                addChatMessage('❌ Lỗi đọc file ảnh', 'bot', 'error');
+                fileStatus.textContent = 'Lỗi!';
+                addChatMessage('❌ Lỗi đọc ảnh', 'bot', 'error');
             };
             reader.readAsDataURL(file);
         });
 
         // ============================================
-        // GEMINI API INTEGRATION
+        // GEMINI API - Sử dụng gemini-1.5-pro
         // ============================================
 
         async function sendToGemini(userQuery) {
@@ -678,23 +583,19 @@
             document.getElementById('sendBtn').disabled = true;
 
             try {
-                // Hiển thị lệnh người dùng
                 addChatMessage(userQuery, 'user');
 
-                // Nếu có ảnh, thêm ảnh vào chat
                 if (appState.selectedFile.base64) {
                     addChatImage(appState.selectedFile.base64, appState.selectedFile.mimeType);
                 }
 
-                // Tạo tin nhắn đang xử lý
                 const processingMsg = addChatMessage('⏳ Robot đang xử lý...', 'bot', 'normal');
 
-                // Xây dựng prompt hướng dẫn
                 const systemPrompt = `Bạn là trợ lý AI chuyên biệt điền dữ liệu vào bảng tính Excel.
 
 NHIỆM VỤ: Phân tích yêu cầu của người dùng hoặc dữ liệu trong ảnh, sau đó trả về JSON để điền vào bảng tính.
 
-ĐỊNH DẠNG JSON BẮTBUỘC:
+ĐỊNH DẠNG JSON BẮTBUỘC (CHỈ JSON, KHÔNG CÓ CHỮ GIẢI THÍCH):
 [
   {"row": 0, "col": 0, "val": "Tên Cột 1"},
   {"row": 1, "col": 0, "val": "Dữ liệu"},
@@ -706,15 +607,12 @@ QUY TẮC:
 - col: số cột (0 = cột A, 1 = cột B, v.v.)
 - val: giá trị (có thể là text, số, hoặc công thức Excel bắt đầu bằng =)
 - Công thức Excel: dùng chữ hoa như =SUM(), =AVERAGE(), =IF(), v.v.
-- CHỈ trả về JSON, không có chữ giải thích hay markdown
-- JSON phải là mảng hợp lệ, có thể parse bằng JSON.parse()`;
+- CHỈ trả về JSON hợp lệ, không có markdown hay giải thích`;
 
-                const userPrompt = userQuery || 'Đọc dữ liệu trong ảnh và chuyển thành cấu trúc bảng tính';
+                const userPrompt = userQuery || 'Đọc dữ liệu trong ảnh';
 
-                // Xây dựng parts của request
                 let parts = [{ text: systemPrompt + '\n\nYêu cầu: ' + userPrompt }];
 
-                // Nếu có ảnh, thêm vào
                 if (appState.selectedFile.base64) {
                     parts.push({
                         inlineData: {
@@ -724,10 +622,10 @@ QUY TẮC:
                     });
                 }
 
-                // Gọi Gemini API
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                // Sử dụng model gemini-1.5-pro (mô hình mới, ổn định, hỗ trợ multimodal)
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
 
-                console.log('🚀 Gọi Gemini API...');
+                console.log('🚀 Gọi Gemini API với model gemini-1.5-pro...');
 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -735,51 +633,47 @@ QUY TẮC:
                     body: JSON.stringify({
                         contents: [{ parts: parts }],
                         generationConfig: {
-                            temperature: 0.2,
-                            maxOutputTokens: 4096
+                            temperature: 0.1,
+                            maxOutputTokens: 2048
                         }
                     })
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
+                    console.error('API Error:', errorData);
                     throw new Error(
                         errorData.error?.message || 
-                        `HTTP ${response.status}: ${response.statusText}`
+                        `HTTP ${response.status}`
                     );
                 }
 
                 const data = await response.json();
+                console.log('📨 Response:', data);
 
                 if (data.error) {
-                    throw new Error(data.error.message || 'Gemini API Error');
+                    throw new Error(data.error.message);
                 }
 
                 if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-                    throw new Error('Gemini không phản hồi dữ liệu hợp lệ');
+                    throw new Error('Gemini không phản hồi');
                 }
 
                 let responseText = data.candidates[0].content.parts[0].text.trim();
-                console.log('📨 Response từ Gemini:', responseText);
 
-                // Bỏ markdown code blocks nếu có
+                // Bỏ markdown
                 if (responseText.includes('```')) {
                     responseText = responseText.replace(/```json\n?|\n?```/g, '').trim();
                 }
 
                 // Parse JSON
-                let cellData;
-                try {
-                    cellData = JSON.parse(responseText);
-                } catch (parseError) {
-                    throw new Error('Gemini trả về dữ liệu không phải JSON hợp lệ');
-                }
+                let cellData = JSON.parse(responseText);
 
                 if (!Array.isArray(cellData)) {
-                    throw new Error('Dữ liệu Gemini không phải mảng JSON');
+                    throw new Error('Dữ liệu không phải mảng');
                 }
 
-                // Điền dữ liệu vào bảng
+                // Điền vào bảng
                 let successCount = 0;
                 cellData.forEach(cell => {
                     if (
@@ -789,14 +683,10 @@ QUY TẮC:
                         cell.val !== null
                     ) {
                         try {
-                            appState.spreadsheet.setValueFromCoords(
-                                cell.col,
-                                cell.row,
-                                String(cell.val)
-                            );
+                            appState.spreadsheet.setDataAtCell(cell.row, cell.col, String(cell.val));
                             successCount++;
                         } catch (err) {
-                            console.warn(`Lỗi điền ô [${cell.row}, ${cell.col}]:`, err);
+                            console.warn('Lỗi set cell:', err);
                         }
                     }
                 });
@@ -804,15 +694,11 @@ QUY TẮC:
                 if (successCount > 0) {
                     updateChatMessage(
                         processingMsg,
-                        `✅ Đã điền thành công ${successCount} ô dữ liệu!`,
+                        `✅ Đã điền ${successCount} ô dữ liệu!`,
                         'success'
                     );
                 } else {
-                    updateChatMessage(
-                        processingMsg,
-                        '⚠️ Không tìm được dữ liệu để điền',
-                        'normal'
-                    );
+                    updateChatMessage(processingMsg, '⚠️ Không tìm dữ liệu', 'normal');
                 }
 
             } catch (error) {
@@ -822,7 +708,7 @@ QUY TẮC:
                 appState.isProcessing = false;
                 document.getElementById('sendBtn').disabled = false;
                 document.getElementById('fileInput').value = '';
-                document.getElementById('fileStatus').textContent = 'Chưa chọn ảnh';
+                document.getElementById('fileStatus').textContent = 'Chưa chọn';
                 appState.selectedFile = { base64: null, mimeType: null, name: null };
                 document.getElementById('userInput').focus();
             }
@@ -844,28 +730,21 @@ QUY TẮC:
                 const data = appState.spreadsheet.getData();
 
                 const workbook = new ExcelJS.Workbook();
-                const worksheet = workbook.addWorksheet('Báo Cáo', {
-                    pageSetup: { paperSize: 9, orientation: 'portrait' }
-                });
+                const worksheet = workbook.addWorksheet('Báo Cáo');
 
-                // Điền dữ liệu
                 data.forEach((row, rowIdx) => {
                     row.forEach((cellValue, colIdx) => {
                         if (cellValue !== '' && cellValue !== null) {
                             const cell = worksheet.getCell(rowIdx + 1, colIdx + 1);
                             
                             if (typeof cellValue === 'string' && cellValue.startsWith('=')) {
-                                // Xử lý công thức
                                 cell.value = { formula: cellValue.substring(1) };
                             } else if (!isNaN(cellValue) && cellValue !== '') {
-                                // Xử lý số
                                 cell.value = parseFloat(cellValue);
                             } else {
-                                // Xử lý text
                                 cell.value = cellValue;
                             }
 
-                            // Style cell
                             if (rowIdx === 0) {
                                 cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
                                 cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF107C41' } };
@@ -875,7 +754,6 @@ QUY TẮC:
                     });
                 });
 
-                // Tự động điều chỉnh độ rộng cột
                 worksheet.columns.forEach((col, idx) => {
                     let maxLength = 12;
                     data.forEach(row => {
@@ -887,15 +765,14 @@ QUY TẮC:
                     col.width = Math.min(maxLength + 2, 50);
                 });
 
-                // Xuất file
                 const buffer = await workbook.xlsx.writeBuffer();
-                saveAs(new Blob([buffer]), `Báo_Cáo_Excel_${new Date().toLocaleDateString('vi-VN')}.xlsx`);
+                saveAs(new Blob([buffer]), `Báo_Cáo_${new Date().toLocaleDateString('vi-VN')}.xlsx`);
 
-                addChatMessage('✅ File Excel đã được tải xuống!', 'bot', 'success');
+                addChatMessage('✅ File Excel đã tải xuống!', 'bot', 'success');
 
             } catch (error) {
                 console.error('❌ Lỗi xuất file:', error);
-                addChatMessage(`❌ Lỗi xuất file: ${error.message}`, 'bot', 'error');
+                addChatMessage(`❌ Lỗi: ${error.message}`, 'bot', 'error');
             } finally {
                 document.getElementById('exportBtn').disabled = false;
             }
@@ -933,16 +810,12 @@ QUY TẮC:
         // ============================================
 
         window.addEventListener('load', () => {
-            console.log('🚀 Ứng dụng đang khởi tạo...');
-            initSpreadsheet();
-            addChatMessage('👋 Chào bạn! Tôi là Robot Gemini Copilot. Hãy dán API Key của bạn để bắt đầu.', 'bot', 'normal');
-            document.getElementById('apiKeyInput').focus();
-        });
-
-        // Xử lý khi đóng cửa sổ
-        window.addEventListener('beforeunload', (e) => {
-            // Không cần confirm, chỉ để sạch dữ liệu
-            console.log('🛑 Đóng ứng dụng');
+            console.log('🚀 Khởi tạo ứng dụng...');
+            setTimeout(() => {
+                initSpreadsheet();
+                addChatMessage('👋 Chào! Hãy dán API Key Gemini để bắt đầu.', 'bot', 'normal');
+                document.getElementById('apiKeyInput').focus();
+            }, 500);
         });
 
     </script>
