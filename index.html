@@ -5,13 +5,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ thống Excel Gemini Robot Siêu Cấp</title>
     
-    <!-- Tải thư viện bảng tính ổn định cao -->
-    <link rel="stylesheet" href="https://jsdelivr.net" type="text/css" />
-    <link rel="stylesheet" href="https://jsdelivr.net" type="text/css" />
-    <script src="https://jsdelivr.net"></script>
-    <script src="https://jsdelivr.net"></script>
-    <script src="https://jsdelivr.net"></script>
-    <script src="https://jsdelivr.net"></script>
+    <!-- Thư viện jspreadsheet (bảng tính) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.30/dist/jspreadsheet.css" type="text/css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsuites@1.11.3/dist/jsuites.css" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/jsuites@1.11.3/dist/jsuites.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.30/dist/jspreadsheet.js"></script>
+    
+    <!-- Thư viện ExcelJS (xuất file .xlsx) -->
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    
+    <!-- Thư viện FileSaver (tải file về máy) -->
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
     <style>
         body, html {
@@ -86,7 +90,7 @@
                 <input type="password" id="api-key-field" class="api-input" placeholder="Dán mã Gemini API Key vào đây...">
             </div>
             <div id="chat-box">
-                <div class="msg bot-msg">Chào bạn! Tôi đã làm lại hệ thống ô lưới Excel mới siêu ổn định. Hãy dán Key Gemini của bạn vào ô trên, sau đó ra lệnh để tôi điền tự động dữ liệu nhé!</div>
+                <div class="msg bot-msg">Chào bạn! 👋 Tôi đã sửa xong hệ thống bảng tính Excel. Vui lòng dán Key Gemini của bạn vào ô trên, sau đó ra lệnh gì thì tôi làm nấy!</div>
             </div>
             <div class="controls-area">
                 <div class="upload-row">
@@ -115,7 +119,7 @@
             
             tableInstance = jspreadsheet(document.getElementById('spreadsheet'), {
                 data: initialData,
-                minDimensions:,
+                minDimensions: [10, 20],
                 tableOverflow: true,
                 tableWidth: '100%',
                 tableHeight: '90%',
@@ -150,6 +154,7 @@
             };
             reader.readAsDataURL(file);
         }
+
         // Xử lý gửi tin nhắn lệnh cấu trúc dữ liệu cho Gemini
         async function sendToAI() {
             let inputField = document.getElementById('user-input');
@@ -182,9 +187,15 @@
 
             try {
                 const promptInstruct = `${query || "Đọc bảng dữ liệu trong ảnh"}
-Bạn là trợ lý ảo điền dữ liệu vào bảng tính. Phân tích ảnh hoặc yêu cầu của người dùng, chuyển thông tin thành cấu trúc mảng JSON. Không giải thích gì thêm ngoài JSON.
+
+Bạn là trợ lý ảo điền dữ liệu vào bảng tính. Phân tích ảnh hoặc yêu cầu của người dùng, chuyển thông tin thành cấu trúc mảng JSON. Không giải thích chi tiết, chỉ trả về JSON thuần.
+
 Định dạng JSON bắt buộc: [{"row": số_hàng, "col": số_cột, "val": "giá_trị"}]
-Lưu ý: Hàng đầu tiên (A1, B1...) có số_hàng là 0, số_cột là 0 (Cột A=0, B=1...). Các ô tính tổng hoặc công thức dùng chữ viết hoa như "=SUM(B2:B5)"`;
+
+Lưu ý: 
+- Hàng đầu tiên (A1, B1...) có số_hàng là 0, số_cột là 0 (Cột A=0, B=1...). 
+- Các ô tính tổng hoặc công thức dùng chữ viết hoa như "=SUM(B2:B5)"
+- Trả về CHỈ JSON, không có chữ giải thích`;
 
                 let parts = [{ text: promptInstruct }];
                 if (selectedFileBase64) {
@@ -196,8 +207,8 @@ Lưu ý: Hàng đầu tiên (A1, B1...) có số_hàng là 0, số_cột là 0 (
                     });
                 }
 
-                // Gọi tới mô hình gemini-2.5-flash của Google
-                const url = `https://googleapis.com{apiKey}`;
+                // Gọi tới mô hình gemini-2.0-flash của Google
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
                 
                 const response = await fetch(url, {
                     method: "POST",
@@ -232,11 +243,12 @@ Lưu ý: Hàng đầu tiên (A1, B1...) có số_hàng là 0, số_cột là 0 (
 
             } catch (error) {
                 document.getElementById(loadingId).innerText = "❌ Gặp lỗi khi xử lý dữ liệu. Vui lòng kiểm tra lại Key hoặc độ nét của ảnh!";
-                console.error(error);
+                console.error("Chi tiết lỗi:", error);
             } finally {
                 document.getElementById('file-input').value = "";
                 document.getElementById('file-status').innerText = "Chưa có ảnh nào được chọn";
-                selectedFileBase64 = null; selectedFileType = null;
+                selectedFileBase64 = null; 
+                selectedFileType = null;
             }
         }
 
@@ -246,13 +258,14 @@ Lưu ý: Hàng đầu tiên (A1, B1...) có số_hàng là 0, số_cột là 0 (
             let data = tableInstance.getData();
             
             let workbook = new ExcelJS.Workbook();
-            let worksheet = workbook.addWorksheet('Sheet1');
+            let worksheet = workbook.addWorksheet('Báo Cáo');
 
             data.forEach((row, rowIndex) => {
                 row.forEach((cellValue, colIndex) => {
                     if (cellValue !== '') {
                         let cellObj = worksheet.getCell(rowIndex + 1, colIndex + 1);
                         if (typeof cellValue === 'string' && cellValue.startsWith('=')) {
+                            // Nếu là công thức, bỏ dấu = và đưa vào formula
                             cellObj.value = { formula: cellValue.substring(1) };
                         } else {
                             cellObj.value = cellValue;
@@ -262,7 +275,7 @@ Lưu ý: Hàng đầu tiên (A1, B1...) có số_hàng là 0, số_cột là 0 (
             });
 
             workbook.xlsx.writeBuffer().then(buffer => {
-                saveAs(new Blob([buffer]), "Bao_Cao_Excel_Moi.xlsx");
+                saveAs(new Blob([buffer]), "Báo_Cáo_Excel.xlsx");
             });
         }
 
@@ -270,7 +283,8 @@ Lưu ý: Hàng đầu tiên (A1, B1...) có số_hàng là 0, số_cột là 0 (
             let chatBox = document.getElementById('chat-box');
             let msgDiv = document.createElement('div');
             let uniqueId = "msg-" + Date.now();
-            msgDiv.id = uniqueId; msgDiv.className = `msg ${className}`;
+            msgDiv.id = uniqueId; 
+            msgDiv.className = `msg ${className}`;
             msgDiv.innerText = text;
             chatBox.appendChild(msgDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
