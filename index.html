@@ -3,535 +3,948 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ thống Excel Gemini Robot Siêu Cấp</title>
+    <title>Excel AI Copilot - Hệ Thống Bảng Tính Thông Minh</title>
     
-    <!-- Thư viện jspreadsheet (bảng tính) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspreadsheet-ce/dist/jspreadsheet.min.css" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsuites/dist/jsuites.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/jsuites/dist/jsuites.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jspreadsheet-ce/dist/jspreadsheet.min.js"></script>
+    <!-- JSpreadsheet CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.30/dist/jspreadsheet.css"/>
+    <!-- JSuites CSS (phụ thuộc của JSpreadsheet) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsuites@1.11.3/dist/jsuites.css"/>
     
-    <!-- Thư viện ExcelJS (xuất file .xlsx) -->
-    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
-    
-    <!-- Thư viện FileSaver (tải file về máy) -->
-    <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
-
     <style>
         * {
-            box-sizing: border-box;
-        }
-        body, html {
             margin: 0;
             padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            box-sizing: border-box;
         }
-        #top-bar {
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        /* Top Bar */
+        #topBar {
+            width: 100vw;
             height: 50px;
             background-color: #107c41;
             color: white;
             display: flex;
             align-items: center;
-            padding: 0 20px;
-            font-size: 16px;
-            font-weight: bold;
             justify-content: space-between;
-            box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
+            padding: 0 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
             flex-shrink: 0;
-            z-index: 100;
+            z-index: 1000;
         }
-        #export-btn {
-            background-color: #ffffff;
+
+        #topBar .title {
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
+        #exportBtn {
+            background-color: white;
             color: #107c41;
-            border: 1px solid #ffffff;
-            padding: 6px 12px;
+            border: none;
+            padding: 8px 16px;
             border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
             font-size: 14px;
-        }
-        #export-btn:hover {
-            background-color: #f1f1f1;
-        }
-        #main-container {
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
             display: flex;
-            position: absolute;
-            top: 50px;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            align-items: center;
+            gap: 6px;
+        }
+
+        #exportBtn:hover {
+            background-color: #f0f0f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #exportBtn:active {
+            transform: scale(0.98);
+        }
+
+        /* Main Container */
+        #mainContainer {
+            width: 100vw;
+            height: calc(100vh - 50px);
+            display: flex;
             gap: 0;
-            width: 100%;
-        }
-        #excel-zone {
-            flex: 1;
-            height: 100%;
-            overflow: auto;
-            padding: 15px;
-            background-color: #f4f6f9;
-            min-width: 400px;
-        }
-        #spreadsheet {
-            width: 100%;
-            height: auto;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        #ai-sidebar {
-            flex: 0 0 380px;
-            background-color: #f8f9fa;
-            border-left: 2px solid #dee2e6;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
             overflow: hidden;
         }
-        .ai-title {
-            background-color: #1a73e8;
-            color: white;
-            padding: 12px 15px;
-            font-weight: bold;
-            flex-shrink: 0;
+
+        /* Excel Zone */
+        #excelZone {
+            flex: 0 0 75%;
+            width: 75%;
+            height: 100%;
+            background-color: #f5f5f5;
+            padding: 15px;
+            overflow: auto;
+            border-right: 1px solid #e0e0e0;
         }
-        .api-config-box {
-            padding: 10px 15px;
-            background-color: #e8f0fe;
-            border-bottom: 1px solid #d2e3fc;
-            font-size: 13px;
-            flex-shrink: 0;
-        }
-        .api-input {
+
+        #spreadsheetContainer {
             width: 100%;
-            padding: 6px;
-            margin-top: 5px;
+            height: 100%;
+            background-color: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        #aiSidebar {
+            flex: 0 0 25%;
+            width: 25%;
+            min-width: 340px;
+            height: 100%;
+            background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #e0e0e0;
+            overflow: hidden;
+        }
+
+        .sidebarSection {
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+        }
+
+        #sidebarHeader {
+            background: linear-gradient(135deg, #1a73e8 0%, #0d47a1 100%);
+            color: white;
+            padding: 14px 16px;
+            font-size: 15px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #apiConfigBox {
+            background-color: #e8f0fe;
+            padding: 12px 16px;
+            border-bottom: 1px solid #d2e3fc;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #apiConfigBox label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #202124;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #apiKeyInput {
+            width: 100%;
+            padding: 8px 12px;
             border: 1px solid #1a73e8;
             border-radius: 4px;
             font-size: 13px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.2s;
         }
-        #chat-box {
+
+        #apiKeyInput:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+            border-color: #0d47a1;
+        }
+
+        /* Chat Box */
+        #chatBox {
             flex: 1;
-            padding: 15px;
+            padding: 12px 16px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 10px;
-            background-color: #fff;
+            background-color: white;
+            min-height: 0;
         }
-        .msg {
+
+        .chatMessage {
+            display: flex;
+            animation: slideIn 0.3s ease-out;
+            word-wrap: break-word;
+            max-width: 100%;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .chatMessage.user {
+            justify-content: flex-end;
+        }
+
+        .chatMessage.bot {
+            justify-content: flex-start;
+        }
+
+        .chatBubble {
             padding: 10px 12px;
             border-radius: 8px;
-            max-width: 85%;
             font-size: 13px;
             line-height: 1.4;
+            max-width: 85%;
             word-wrap: break-word;
+            overflow-wrap: break-word;
         }
-        .user-msg {
-            background-color: #e8f0fe;
-            align-self: flex-end;
-            color: #1a73e8;
-            margin-right: 5px;
+
+        .chatBubble.user {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border-bottom-right-radius: 2px;
         }
-        .bot-msg {
-            background-color: #f0f0f0;
-            border: 1px solid #dee2e6;
-            align-self: flex-start;
+
+        .chatBubble.bot {
+            background-color: #f5f5f5;
             color: #212529;
-            margin-left: 5px;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 2px;
         }
-        .chat-image-preview {
-            max-width: 150px;
+
+        .chatBubble.bot.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border-color: #ef5350;
+        }
+
+        .chatBubble.bot.success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border-color: #66bb6a;
+        }
+
+        .chatImage {
+            max-width: 160px;
+            margin-top: 6px;
             border-radius: 4px;
-            margin-top: 5px;
-            display: block;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
-        .controls-area {
-            border-top: 1px solid #dee2e6;
-            background-color: #fff;
-            padding: 10px;
+
+        /* Controls Area */
+        #controlsArea {
+            border-top: 1px solid #e0e0e0;
+            background-color: white;
+            padding: 12px 16px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
             flex-shrink: 0;
         }
-        .upload-row {
+
+        .uploadRow {
             display: flex;
             gap: 10px;
             align-items: center;
-            font-size: 12px;
         }
-        .upload-label {
+
+        .uploadLabel {
             background-color: #f1f3f4;
             color: #3c4043;
-            padding: 6px 10px;
+            padding: 6px 12px;
             border-radius: 4px;
             cursor: pointer;
             font-size: 12px;
             font-weight: 600;
+            border: 1px solid #dadce0;
+            transition: all 0.2s;
             display: flex;
             align-items: center;
-            gap: 5px;
-            border: 1px solid #dadce0;
+            gap: 4px;
             white-space: nowrap;
             flex-shrink: 0;
         }
-        .upload-label:hover {
+
+        .uploadLabel:hover {
             background-color: #e8eaed;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
-        #file-input {
+
+        .uploadLabel:active {
+            background-color: #dadce0;
+        }
+
+        #fileInput {
             display: none;
         }
-        #file-status {
+
+        #fileStatus {
             font-size: 11px;
             color: #5f6368;
             font-style: italic;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 120px;
             flex: 1;
         }
-        .input-row {
+
+        .inputRow {
             display: flex;
             gap: 8px;
         }
-        #user-input {
+
+        #userInput {
             flex: 1;
-            padding: 8px;
-            border: 1px solid #ccc;
+            padding: 8px 12px;
+            border: 1px solid #dadce0;
             border-radius: 4px;
-            outline: none;
-            min-width: 0;
             font-size: 13px;
+            font-family: inherit;
+            transition: all 0.2s;
         }
-        #send-btn {
+
+        #userInput:focus {
+            outline: none;
+            border-color: #1a73e8;
+            box-shadow: 0 0 0 2px rgba(26, 115, 232, 0.1);
+        }
+
+        #sendBtn {
             background-color: #1a73e8;
             color: white;
             border: none;
-            padding: 8px 15px;
+            padding: 8px 16px;
             border-radius: 4px;
-            cursor: pointer;
-            font-weight: bold;
-            white-space: nowrap;
             font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
-        #send-btn:hover {
+
+        #sendBtn:hover {
             background-color: #1557b0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        #send-btn:active {
-            opacity: 0.8;
+
+        #sendBtn:active {
+            transform: scale(0.98);
+        }
+
+        #sendBtn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* Scrollbar Styling */
+        #chatBox::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #chatBox::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #chatBox::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 3px;
+        }
+
+        #chatBox::-webkit-scrollbar-thumb:hover {
+            background: #999;
+        }
+
+        #excelZone::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        #excelZone::-webkit-scrollbar-thumb {
+            background: #999;
+            border-radius: 3px;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            #excelZone {
+                flex: 0 0 65%;
+            }
+            #aiSidebar {
+                flex: 0 0 35%;
+                min-width: 300px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #mainContainer {
+                flex-direction: column;
+            }
+            #excelZone {
+                flex: 0 0 50%;
+                width: 100%;
+            }
+            #aiSidebar {
+                flex: 0 0 50%;
+                width: 100%;
+                min-width: auto;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div id="top-bar">
-        <span>📊 Bảng tính Excel Hệ thống kết hợp Robot Gemini Mới</span>
-        <button id="export-btn" onclick="exportToExcel()">📥 Xuất file Excel (.xlsx)</button>
+    <!-- Top Bar -->
+    <div id="topBar">
+        <div class="title">📊 Excel AI Copilot - Hệ Thống Bảng Tính Thông Minh</div>
+        <button id="exportBtn" title="Xuất dữ liệu thành file Excel (.xlsx)">📥 Xuất Excel</button>
     </div>
 
-    <div id="main-container">
-        <!-- Vùng hiển thị ô lưới Excel -->
-        <div id="excel-zone">
-            <div id="spreadsheet"></div>
+    <!-- Main Container -->
+    <div id="mainContainer">
+        <!-- Excel Zone -->
+        <div id="excelZone">
+            <div id="spreadsheetContainer"></div>
         </div>
 
-        <!-- Sidebar AI -->
-        <div id="ai-sidebar">
-            <div class="ai-title">🤖 Robot Gemini Copilot</div>
-            <div class="api-config-box">
-                <label for="api-key-field"><strong>🔑 Google Gemini API Key:</strong></label>
-                <input type="password" id="api-key-field" class="api-input" placeholder="Dán API Key vào đây...">
+        <!-- AI Sidebar -->
+        <div id="aiSidebar">
+            <!-- Sidebar Header -->
+            <div class="sidebarSection">
+                <div id="sidebarHeader">🤖 Robot Gemini Copilot</div>
             </div>
-            <div id="chat-box">
-                <div class="msg bot-msg">👋 Chào! Dán Key Gemini vào trên, rồi ra lệnh gì thì tôi làm nấy!</div>
-            </div>
-            <div class="controls-area">
-                <div class="upload-row">
-                    <label for="file-input" class="upload-label">📎 Ảnh</label>
-                    <input type="file" id="file-input" accept="image/*" onchange="handleFileSelect()">
-                    <span id="file-status">Chưa chọn</span>
+
+            <!-- API Config -->
+            <div class="sidebarSection">
+                <div id="apiConfigBox">
+                    <label for="apiKeyInput">🔑 Google Gemini API Key</label>
+                    <input 
+                        type="password" 
+                        id="apiKeyInput" 
+                        placeholder="Dán API Key của bạn vào đây..."
+                        autocomplete="off"
+                    />
                 </div>
-                <div class="input-row">
-                    <input type="text" id="user-input" placeholder="Nhập lệnh..." onkeypress="if(event.key === 'Enter') sendToAI()">
-                    <button id="send-btn" onclick="sendToAI()">Gửi</button>
+            </div>
+
+            <!-- Chat Box -->
+            <div id="chatBox"></div>
+
+            <!-- Controls Area -->
+            <div id="controlsArea">
+                <div class="uploadRow">
+                    <label for="fileInput" class="uploadLabel">📎 Đính kèm Ảnh</label>
+                    <input type="file" id="fileInput" accept="image/*"/>
+                    <span id="fileStatus">Chưa chọn ảnh</span>
+                </div>
+                <div class="inputRow">
+                    <input 
+                        type="text" 
+                        id="userInput" 
+                        placeholder="Nhập lệnh hoặc yêu cầu..."
+                        autocomplete="off"
+                    />
+                    <button id="sendBtn">Gửi</button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- JSpreadsheet JS -->
+    <script src="https://cdn.jsdelivr.net/npm/jsuites@1.11.3/dist/jsuites.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.30/dist/jspreadsheet.min.js"></script>
+
+    <!-- ExcelJS -->
+    <script src="https://cdn.jsdelivr.net/npm/exceljs/dist/exceljs.min.js"></script>
+
+    <!-- FileSaver -->
+    <script src="https://cdn.jsdelivr.net/npm/file-saver/dist/FileSaver.min.js"></script>
 
     <script>
-        let selectedFileBase64 = null;
-        let selectedFileType = null;
-        let tableInstance = null;
+        // ============================================
+        // APPLICATION STATE
+        // ============================================
+        const appState = {
+            spreadsheet: null,
+            selectedFile: {
+                base64: null,
+                mimeType: null,
+                name: null
+            },
+            isProcessing: false
+        };
 
-        // Khởi tạo bảng tính với jspreadsheet
-        function initExcelTable() {
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+
+        /**
+         * Thêm tin nhắn vào chat box
+         * @param {string} text - Nội dung tin nhắn
+         * @param {string} type - 'user' hoặc 'bot'
+         * @param {string} status - 'normal', 'error', 'success'
+         * @returns {HTMLElement} - Element của tin nhắn
+         */
+        function addChatMessage(text, type = 'bot', status = 'normal') {
+            const chatBox = document.getElementById('chatBox');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chatMessage ${type}`;
+
+            const bubble = document.createElement('div');
+            bubble.className = `chatBubble ${type}`;
+            if (status !== 'normal') {
+                bubble.classList.add(status);
+            }
+            bubble.textContent = text;
+
+            messageDiv.appendChild(bubble);
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            return messageDiv;
+        }
+
+        /**
+         * Thêm hình ảnh vào chat
+         * @param {string} base64 - Dữ liệu Base64 của ảnh
+         * @param {string} mimeType - Loại MIME
+         */
+        function addChatImage(base64, mimeType) {
+            const chatBox = document.getElementById('chatBox');
+            const messageDiv = chatBox.lastElementChild;
+            const bubble = messageDiv.querySelector('.chatBubble');
+
+            const img = document.createElement('img');
+            img.src = `data:${mimeType};base64,${base64}`;
+            img.className = 'chatImage';
+            img.alt = 'Ảnh đã tải lên';
+            bubble.appendChild(img);
+
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        /**
+         * Cập nhật nội dung tin nhắn
+         * @param {HTMLElement} messageDiv - Element của tin nhắn
+         * @param {string} text - Nội dung mới
+         * @param {string} status - Trạng thái
+         */
+        function updateChatMessage(messageDiv, text, status = 'normal') {
+            const bubble = messageDiv.querySelector('.chatBubble');
+            bubble.textContent = text;
+            bubble.className = `chatBubble bot`;
+            if (status !== 'normal') {
+                bubble.classList.add(status);
+            }
+        }
+
+        // ============================================
+        // SPREADSHEET INITIALIZATION
+        // ============================================
+
+        function initSpreadsheet() {
             try {
-                let initialData = [];
-                for (let i = 0; i < 20; i++) {
-                    initialData.push(new Array(10).fill(''));
-                }
-                
-                // Khởi tạo jspreadsheet
-                const container = document.getElementById('spreadsheet');
-                tableInstance = jspreadsheet(container, {
-                    data: initialData,
-                    minDimensions: [10, 20],
+                const container = document.getElementById('spreadsheetContainer');
+
+                appState.spreadsheet = jspreadsheet(container, {
+                    data: Array(25).fill(null).map(() => Array(10).fill('')),
+                    minDimensions: [10, 25],
                     tableOverflow: true,
                     tableWidth: '100%',
+                    tableHeight: '100%',
+                    columnWidth: [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
                     allowInsertRow: true,
                     allowInsertColumn: true,
                     allowDeleteRow: true,
                     allowDeleteColumn: true,
-                    contextMenu: true,
-                    onchange: function(instance, cell, x, y, value) {
-                        // Ghi log khi có thay đổi
-                        console.log('Cell changed:', x, y, value);
+                    allowRenameColumn: false,
+                    contextMenu: function(obj, x, y, e) {
+                        // Menu chuột phải tùy chỉnh
+                        return [
+                            {
+                                title: 'Chèn hàng trên',
+                                onclick: function() {
+                                    jspreadsheet.insertRow(1, false, y);
+                                }
+                            },
+                            {
+                                title: 'Chèn hàng dưới',
+                                onclick: function() {
+                                    jspreadsheet.insertRow(1, true, y);
+                                }
+                            },
+                            {
+                                title: 'Xóa hàng',
+                                onclick: function() {
+                                    jspreadsheet.deleteRow(y);
+                                }
+                            },
+                            { type: 'line' },
+                            {
+                                title: 'Chèn cột trái',
+                                onclick: function() {
+                                    jspreadsheet.insertColumn(1, false, x);
+                                }
+                            },
+                            {
+                                title: 'Chèn cột phải',
+                                onclick: function() {
+                                    jspreadsheet.insertColumn(1, true, x);
+                                }
+                            },
+                            {
+                                title: 'Xóa cột',
+                                onclick: function() {
+                                    jspreadsheet.deleteColumn(x);
+                                }
+                            }
+                        ];
                     }
                 });
-                
+
                 console.log('✅ Bảng tính đã khởi tạo thành công');
-                appendMessage('✅ Bảng tính sẵn sàng!', 'bot-msg');
-                
+                addChatMessage('✅ Bảng tính sẵn sàng! Hãy dán API Key và bắt đầu sử dụng.', 'bot', 'success');
+
             } catch (error) {
-                console.error('❌ Lỗi khởi tạo bảng:', error);
-                appendMessage('❌ Lỗi khởi tạo bảng: ' + error.message, 'bot-msg');
+                console.error('❌ Lỗi khởi tạo bảng tính:', error);
+                addChatMessage(`❌ Lỗi khởi tạo: ${error.message}`, 'bot', 'error');
             }
         }
 
-        // Chạy khi DOM sẵn sàng
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(initExcelTable, 800);
-            });
-        } else {
-            setTimeout(initExcelTable, 800);
-        }
+        // ============================================
+        // FILE HANDLING
+        // ============================================
 
-        // Đọc ảnh thành Base64
-        function handleFileSelect() {
-            const fileInput = document.getElementById('file-input');
-            const fileStatus = document.getElementById('file-status');
-            const file = fileInput.files[0];
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const fileStatus = document.getElementById('fileStatus');
 
             if (!file) {
-                selectedFileBase64 = null;
-                selectedFileType = null;
-                fileStatus.innerText = "Chưa chọn";
+                appState.selectedFile = { base64: null, mimeType: null, name: null };
+                fileStatus.textContent = 'Chưa chọn ảnh';
                 return;
             }
 
-            fileStatus.innerText = file.name.substring(0, 12);
-            selectedFileType = file.type;
+            if (!file.type.startsWith('image/')) {
+                fileStatus.textContent = 'Vui lòng chọn file ảnh!';
+                alert('Vui lòng chọn file ảnh hợp lệ!');
+                return;
+            }
+
+            fileStatus.textContent = file.name.substring(0, 20) + (file.name.length > 20 ? '...' : '');
+            appState.selectedFile.mimeType = file.type;
+            appState.selectedFile.name = file.name;
 
             const reader = new FileReader();
-            reader.onload = function (e) {
-                selectedFileBase64 = e.target.result.split(',')[1];
-                console.log('✅ Ảnh đã được load');
+            reader.onload = function(event) {
+                appState.selectedFile.base64 = event.target.result.split(',')[1];
+                console.log('✅ Ảnh đã được load thành công');
+            };
+            reader.onerror = function() {
+                fileStatus.textContent = 'Lỗi đọc file!';
+                addChatMessage('❌ Lỗi đọc file ảnh', 'bot', 'error');
             };
             reader.readAsDataURL(file);
-        }
+        });
 
-        // Gửi yêu cầu tới Gemini API
-        async function sendToAI() {
-            let inputField = document.getElementById('user-input');
-            let apiKeyField = document.getElementById('api-key-field');
-            let query = inputField.value.trim();
-            let apiKey = apiKeyField.value.trim();
+        // ============================================
+        // GEMINI API INTEGRATION
+        // ============================================
 
-            if (!query && !selectedFileBase64) {
-                alert("Vui lòng nhập lệnh hoặc chọn ảnh!");
-                return;
-            }
+        async function sendToGemini(userQuery) {
+            const apiKeyInput = document.getElementById('apiKeyInput');
+            const apiKey = apiKeyInput.value.trim();
+
             if (!apiKey) {
-                alert("Vui lòng điền API Key Gemini!");
+                addChatMessage('❌ Vui lòng dán Google Gemini API Key!', 'bot', 'error');
+                apiKeyInput.focus();
                 return;
             }
 
-            // Hiển thị tin nhắn người dùng
-            let chatBox = document.getElementById('chat-box');
-            let userMsgDiv = document.createElement('div');
-            userMsgDiv.className = 'msg user-msg';
-            userMsgDiv.innerText = query || "📸 Đã gửi hình ảnh";
-            
-            if (selectedFileBase64) {
-                let imgPreview = document.createElement('img');
-                imgPreview.src = `data:${selectedFileType};base64,${selectedFileBase64}`;
-                imgPreview.className = 'chat-image-preview';
-                userMsgDiv.appendChild(imgPreview);
-            }
-            chatBox.appendChild(userMsgDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
-
-            inputField.value = '';
-            let loadingId = appendMessage("⏳ Robot đang xử lý...", 'bot-msg');
+            appState.isProcessing = true;
+            document.getElementById('sendBtn').disabled = true;
 
             try {
-                // Prompt chi tiết cho Gemini
-                const promptInstruct = `${query || "Đọc bảng dữ liệu trong ảnh"}
+                // Hiển thị lệnh người dùng
+                addChatMessage(userQuery, 'user');
 
-Bạn là trợ lý ảo điền dữ liệu vào bảng tính Excel. Phân tích ảnh hoặc yêu cầu của người dùng, tạo dữ liệu theo yêu cầu.
+                // Nếu có ảnh, thêm ảnh vào chat
+                if (appState.selectedFile.base64) {
+                    addChatImage(appState.selectedFile.base64, appState.selectedFile.mimeType);
+                }
 
-QUAN TRỌNG: Trả về CHỈ một mảng JSON, không có chữ giải thích:
-[{"row": 0, "col": 0, "val": "Tên Nhân Viên"}, {"row": 1, "col": 0, "val": "Nguyễn Văn A"}]
+                // Tạo tin nhắn đang xử lý
+                const processingMsg = addChatMessage('⏳ Robot đang xử lý...', 'bot', 'normal');
 
-Quy tắc:
-- Hàng A1, B1, C1... → row: 0
-- Cột A, B, C... → col: 0, 1, 2...
-- Công thức Excel: val = "=SUM(B2:B10)"
-- Số: val = "1000" hoặc "1000.50"
-- Chữ: val = "Tên Nhân Viên"
-- CHỈ trả về JSON, không có markdown, không có giải thích`;
+                // Xây dựng prompt hướng dẫn
+                const systemPrompt = `Bạn là trợ lý AI chuyên biệt điền dữ liệu vào bảng tính Excel.
 
-                let parts = [{ text: promptInstruct }];
-                
-                // Nếu có ảnh, thêm vào request
-                if (selectedFileBase64) {
+NHIỆM VỤ: Phân tích yêu cầu của người dùng hoặc dữ liệu trong ảnh, sau đó trả về JSON để điền vào bảng tính.
+
+ĐỊNH DẠNG JSON BẮTBUỘC:
+[
+  {"row": 0, "col": 0, "val": "Tên Cột 1"},
+  {"row": 1, "col": 0, "val": "Dữ liệu"},
+  {"row": 2, "col": 1, "val": "=SUM(B2:B10)"}
+]
+
+QUY TẮC:
+- row: số hàng (0 = hàng 1, 1 = hàng 2, v.v.)
+- col: số cột (0 = cột A, 1 = cột B, v.v.)
+- val: giá trị (có thể là text, số, hoặc công thức Excel bắt đầu bằng =)
+- Công thức Excel: dùng chữ hoa như =SUM(), =AVERAGE(), =IF(), v.v.
+- CHỈ trả về JSON, không có chữ giải thích hay markdown
+- JSON phải là mảng hợp lệ, có thể parse bằng JSON.parse()`;
+
+                const userPrompt = userQuery || 'Đọc dữ liệu trong ảnh và chuyển thành cấu trúc bảng tính';
+
+                // Xây dựng parts của request
+                let parts = [{ text: systemPrompt + '\n\nYêu cầu: ' + userPrompt }];
+
+                // Nếu có ảnh, thêm vào
+                if (appState.selectedFile.base64) {
                     parts.push({
                         inlineData: {
-                            mimeType: selectedFileType,
-                            data: selectedFileBase64
+                            mimeType: appState.selectedFile.mimeType,
+                            data: appState.selectedFile.base64
                         }
                     });
                 }
 
-                // Gọi Gemini API với model gemini-pro-vision (hỗ trợ hình ảnh)
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=${apiKey}`;
-                
-                console.log('🚀 Gọi API Gemini:', url);
-                
+                // Gọi Gemini API
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                console.log('🚀 Gọi Gemini API...');
+
                 const response = await fetch(url, {
-                    method: "POST",
-                    headers: { 
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ 
-                        contents: [{
-                            parts: parts
-                        }],
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: parts }],
                         generationConfig: {
-                            temperature: 0.1,
-                            maxOutputTokens: 2048
+                            temperature: 0.2,
+                            maxOutputTokens: 4096
                         }
                     })
                 });
 
-                console.log('📡 Response status:', response.status);
-
                 if (!response.ok) {
-                    const errorText = await response.text();
-                    console.error('❌ API Error:', errorText);
-                    document.getElementById(loadingId).innerText = "❌ Lỗi API: " + response.status;
-                    return;
+                    const errorData = await response.json();
+                    throw new Error(
+                        errorData.error?.message || 
+                        `HTTP ${response.status}: ${response.statusText}`
+                    );
                 }
 
-                const rawData = await response.json();
-                console.log('📨 Response từ Gemini:', rawData);
-                
-                if (rawData.error) {
-                    document.getElementById(loadingId).innerText = "❌ Lỗi: " + rawData.error.message;
-                    return;
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error.message || 'Gemini API Error');
                 }
 
-                if (!rawData.candidates || !rawData.candidates[0] || !rawData.candidates[0].content) {
-                    document.getElementById(loadingId).innerText = "❌ Gemini không phản hồi";
-                    return;
+                if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                    throw new Error('Gemini không phản hồi dữ liệu hợp lệ');
                 }
 
-                let aiTextResponse = rawData.candidates[0].content.parts[0].text.trim();
-                console.log('📝 Text response:', aiTextResponse);
-                
-                // Bỏ markdown code blocks
-                if (aiTextResponse.includes("```")) {
-                    aiTextResponse = aiTextResponse.replace(/```json\n?|\n?```/g, "").trim();
+                let responseText = data.candidates[0].content.parts[0].text.trim();
+                console.log('📨 Response từ Gemini:', responseText);
+
+                // Bỏ markdown code blocks nếu có
+                if (responseText.includes('```')) {
+                    responseText = responseText.replace(/```json\n?|\n?```/g, '').trim();
                 }
 
                 // Parse JSON
-                let cellDataArray = JSON.parse(aiTextResponse);
-                console.log('✅ Parsed JSON:', cellDataArray);
-                
-                if (Array.isArray(cellDataArray) && cellDataArray.length > 0) {
-                    let successCount = 0;
-                    cellDataArray.forEach(cell => {
-                        if (tableInstance && typeof cell.row !== 'undefined' && typeof cell.col !== 'undefined' && cell.val !== null) {
-                            try {
-                                tableInstance.setValueFromCoords(cell.col, cell.row, String(cell.val));
-                                successCount++;
-                            } catch (e) {
-                                console.error('Lỗi set cell:', e, cell);
-                            }
+                let cellData;
+                try {
+                    cellData = JSON.parse(responseText);
+                } catch (parseError) {
+                    throw new Error('Gemini trả về dữ liệu không phải JSON hợp lệ');
+                }
+
+                if (!Array.isArray(cellData)) {
+                    throw new Error('Dữ liệu Gemini không phải mảng JSON');
+                }
+
+                // Điền dữ liệu vào bảng
+                let successCount = 0;
+                cellData.forEach(cell => {
+                    if (
+                        appState.spreadsheet &&
+                        typeof cell.row === 'number' &&
+                        typeof cell.col === 'number' &&
+                        cell.val !== null
+                    ) {
+                        try {
+                            appState.spreadsheet.setValueFromCoords(
+                                cell.col,
+                                cell.row,
+                                String(cell.val)
+                            );
+                            successCount++;
+                        } catch (err) {
+                            console.warn(`Lỗi điền ô [${cell.row}, ${cell.col}]:`, err);
                         }
-                    });
-                    document.getElementById(loadingId).innerText = `✅ Đã điền ${successCount} ô dữ liệu!`;
+                    }
+                });
+
+                if (successCount > 0) {
+                    updateChatMessage(
+                        processingMsg,
+                        `✅ Đã điền thành công ${successCount} ô dữ liệu!`,
+                        'success'
+                    );
                 } else {
-                    document.getElementById(loadingId).innerText = "⚠️ Không tìm được dữ liệu hợp lệ";
+                    updateChatMessage(
+                        processingMsg,
+                        '⚠️ Không tìm được dữ liệu để điền',
+                        'normal'
+                    );
                 }
 
             } catch (error) {
-                console.error("Chi tiết lỗi:", error);
-                document.getElementById(loadingId).innerText = "❌ Lỗi: " + error.message;
+                console.error('❌ Lỗi:', error);
+                addChatMessage(`❌ Lỗi: ${error.message}`, 'bot', 'error');
             } finally {
-                document.getElementById('file-input').value = "";
-                document.getElementById('file-status').innerText = "Chưa chọn";
-                selectedFileBase64 = null; 
-                selectedFileType = null;
+                appState.isProcessing = false;
+                document.getElementById('sendBtn').disabled = false;
+                document.getElementById('fileInput').value = '';
+                document.getElementById('fileStatus').textContent = 'Chưa chọn ảnh';
+                appState.selectedFile = { base64: null, mimeType: null, name: null };
+                document.getElementById('userInput').focus();
             }
         }
 
-        // Xuất file Excel
-        function exportToExcel() {
-            if (!tableInstance) {
-                alert("Bảng tính trống!");
+        // ============================================
+        // EXPORT TO EXCEL
+        // ============================================
+
+        async function exportToExcel() {
+            if (!appState.spreadsheet) {
+                alert('❌ Bảng tính chưa sẵn sàng!');
                 return;
             }
-            
-            try {
-                let data = tableInstance.getData();
-                
-                let workbook = new ExcelJS.Workbook();
-                let worksheet = workbook.addWorksheet('Báo Cáo');
 
-                data.forEach((row, rowIndex) => {
-                    row.forEach((cellValue, colIndex) => {
-                        if (cellValue !== '' && cellValue !== null && cellValue !== undefined) {
-                            let cellObj = worksheet.getCell(rowIndex + 1, colIndex + 1);
+            try {
+                document.getElementById('exportBtn').disabled = true;
+
+                const data = appState.spreadsheet.getData();
+
+                const workbook = new ExcelJS.Workbook();
+                const worksheet = workbook.addWorksheet('Báo Cáo', {
+                    pageSetup: { paperSize: 9, orientation: 'portrait' }
+                });
+
+                // Điền dữ liệu
+                data.forEach((row, rowIdx) => {
+                    row.forEach((cellValue, colIdx) => {
+                        if (cellValue !== '' && cellValue !== null) {
+                            const cell = worksheet.getCell(rowIdx + 1, colIdx + 1);
+                            
                             if (typeof cellValue === 'string' && cellValue.startsWith('=')) {
-                                cellObj.value = { formula: cellValue.substring(1) };
+                                // Xử lý công thức
+                                cell.value = { formula: cellValue.substring(1) };
+                            } else if (!isNaN(cellValue) && cellValue !== '') {
+                                // Xử lý số
+                                cell.value = parseFloat(cellValue);
                             } else {
-                                cellObj.value = cellValue;
+                                // Xử lý text
+                                cell.value = cellValue;
+                            }
+
+                            // Style cell
+                            if (rowIdx === 0) {
+                                cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF107C41' } };
+                                cell.alignment = { horizontal: 'center', vertical: 'center' };
                             }
                         }
                     });
                 });
 
-                workbook.xlsx.writeBuffer().then(buffer => {
-                    saveAs(new Blob([buffer]), "Báo_Cáo_Excel.xlsx");
-                    appendMessage("✅ File Excel đã tải xuống!", 'bot-msg');
-                }).catch(err => {
-                    console.error("Lỗi xuất file:", err);
-                    appendMessage("❌ Lỗi xuất file", 'bot-msg');
+                // Tự động điều chỉnh độ rộng cột
+                worksheet.columns.forEach((col, idx) => {
+                    let maxLength = 12;
+                    data.forEach(row => {
+                        const cellValue = row[idx];
+                        if (cellValue) {
+                            maxLength = Math.max(maxLength, String(cellValue).length);
+                        }
+                    });
+                    col.width = Math.min(maxLength + 2, 50);
                 });
+
+                // Xuất file
+                const buffer = await workbook.xlsx.writeBuffer();
+                saveAs(new Blob([buffer]), `Báo_Cáo_Excel_${new Date().toLocaleDateString('vi-VN')}.xlsx`);
+
+                addChatMessage('✅ File Excel đã được tải xuống!', 'bot', 'success');
+
             } catch (error) {
-                console.error("Lỗi:", error);
-                alert("Lỗi: " + error.message);
+                console.error('❌ Lỗi xuất file:', error);
+                addChatMessage(`❌ Lỗi xuất file: ${error.message}`, 'bot', 'error');
+            } finally {
+                document.getElementById('exportBtn').disabled = false;
             }
         }
 
-        function appendMessage(text, className) {
-            let chatBox = document.getElementById('chat-box');
-            let msgDiv = document.createElement('div');
-            let uniqueId = "msg-" + Date.now();
-            msgDiv.id = uniqueId; 
-            msgDiv.className = `msg ${className}`;
-            msgDiv.innerText = text;
-            chatBox.appendChild(msgDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
-            return uniqueId;
-        }
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+
+        document.getElementById('sendBtn').addEventListener('click', () => {
+            const userInput = document.getElementById('userInput');
+            const query = userInput.value.trim();
+
+            if (!query && !appState.selectedFile.base64) {
+                alert('Vui lòng nhập lệnh hoặc chọn ảnh!');
+                return;
+            }
+
+            if (!appState.isProcessing) {
+                sendToGemini(query);
+                userInput.value = '';
+            }
+        });
+
+        document.getElementById('userInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !appState.isProcessing) {
+                document.getElementById('sendBtn').click();
+            }
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', exportToExcel);
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+
+        window.addEventListener('load', () => {
+            console.log('🚀 Ứng dụng đang khởi tạo...');
+            initSpreadsheet();
+            addChatMessage('👋 Chào bạn! Tôi là Robot Gemini Copilot. Hãy dán API Key của bạn để bắt đầu.', 'bot', 'normal');
+            document.getElementById('apiKeyInput').focus();
+        });
+
+        // Xử lý khi đóng cửa sổ
+        window.addEventListener('beforeunload', (e) => {
+            // Không cần confirm, chỉ để sạch dữ liệu
+            console.log('🛑 Đóng ứng dụng');
+        });
+
     </script>
 </body>
 </html>
