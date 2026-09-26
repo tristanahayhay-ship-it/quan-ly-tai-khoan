@@ -5,13 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ thống Excel Gemini Robot Siêu Cấp</title>
     
-    <!-- Tải CSS thư viện bảng tính Luckysheet -->
-    <link rel='stylesheet' href='https://jsdelivr.net' />
-    <link rel='stylesheet' href='https://jsdelivr.net' />
-    <link rel='stylesheet' href='https://jsdelivr.net' />
-    <link rel='stylesheet' href='https://jsdelivr.net' />
-    
-    <!-- Tải các thư viện cốt lõi xử lý dữ liệu và File -->
+    <!-- Tải thư viện bảng tính ổn định cao -->
+    <link rel="stylesheet" href="https://jsdelivr.net" type="text/css" />
+    <link rel="stylesheet" href="https://jsdelivr.net" type="text/css" />
     <script src="https://jsdelivr.net"></script>
     <script src="https://jsdelivr.net"></script>
     <script src="https://jsdelivr.net"></script>
@@ -38,7 +34,9 @@
         #main-container {
             display: flex; position: absolute; top: 50px; bottom: 0; left: 0; right: 0;
         }
-        #luckysheet-container { flex: 3; height: 100%; position: relative; }
+        #excel-zone { 
+            flex: 3; height: 100%; overflow: auto; padding: 20px; box-sizing: border-box; background-color: #f4f6f9;
+        }
         #ai-sidebar {
             flex: 1; min-width: 340px; max-width: 420px;
             background-color: #f8f9fa; border-left: 2px solid #dee2e6;
@@ -71,12 +69,15 @@
 <body>
 
     <div id="top-bar">
-        <span>📊 Bảng tính Excel kết hợp Robot Google Gemini Vision</span>
+        <span>📊 Bảng tính Excel Hệ thống kết hợp Robot Gemini Mới</span>
         <button id="export-btn" onclick="exportToExcel()">📥 Xuất file Excel (.xlsx)</button>
     </div>
 
     <div id="main-container">
-        <div id="luckysheet-container"></div>
+        <!-- Vùng hiển thị ô lưới Excel mới -->
+        <div id="excel-zone">
+            <div id="spreadsheet"></div>
+        </div>
 
         <div id="ai-sidebar">
             <div class="ai-title">🤖 Robot Gemini Copilot Intelligence</div>
@@ -85,7 +86,7 @@
                 <input type="password" id="api-key-field" class="api-input" placeholder="Dán mã Gemini API Key vào đây...">
             </div>
             <div id="chat-box">
-                <div class="msg bot-msg">Chào bạn! Hệ thống đã chuyển sang sử dụng bộ não **Google Gemini**. Hãy dán Key Gemini của bạn lên khung trên, sau đó thoải mái **đính kèm ảnh 📎** và ra lệnh để tôi điền vào ô lưới Excel nhé!</div>
+                <div class="msg bot-msg">Chào bạn! Tôi đã làm lại hệ thống ô lưới Excel mới siêu ổn định. Hãy dán Key Gemini của bạn vào ô trên, sau đó ra lệnh để tôi điền tự động dữ liệu nhé!</div>
             </div>
             <div class="controls-area">
                 <div class="upload-row">
@@ -94,7 +95,7 @@
                     <span id="file-status">Chưa có ảnh nào được chọn</span>
                 </div>
                 <div class="input-row">
-                    <input type="text" id="user-input" placeholder="Bảo gì làm nấy bằng sức mạnh Gemini..." onkeypress="if(event.key === 'Enter') sendToAI()">
+                    <input type="text" id="user-input" placeholder="Bảo gì làm nấy..." onkeypress="if(event.key === 'Enter') sendToAI()">
                     <button id="send-btn" onclick="sendToAI()">Gửi</button>
                 </div>
             </div>
@@ -103,22 +104,30 @@
     <script>
         let selectedFileBase64 = null;
         let selectedFileType = null;
+        let tableInstance = null;
 
-        // Khởi tạo không gian bảng lưới Excel
-        $(function () {
-            var options = {
-                container: 'luckysheet-container',
-                title: 'Workspace_Gemini_Vision',
-                lang: 'zh',
-                showinfobar: false,
-                showtoolbar: true,
-                showsheetbar: true,
-                data: [{ "name": "Sheet1", "status": "1", "order": "0", "celldata": [] }]
-            };
-            luckysheet.create(options);
-        });
+        // Khởi tạo bảng tính trống kích thước mặc định (20 hàng x 10 cột)
+        function initExcelTable() {
+            let initialData = [];
+            for (let i = 0; i < 20; i++) {
+                initialData.push(new Array(10).fill(''));
+            }
+            
+            tableInstance = jspreadsheet(document.getElementById('spreadsheet'), {
+                data: initialData,
+                minDimensions:,
+                tableOverflow: true,
+                tableWidth: '100%',
+                tableHeight: '90%',
+                contextMenu: true // Bấm chuột phải để thêm hàng/cột thoải mái
+            });
+        }
 
-        // Xử lý đọc và mã hóa dữ liệu hình ảnh
+        window.onload = function() {
+            initExcelTable();
+        };
+
+        // Đọc và mã hóa ảnh thành Base64
         function handleFileSelect() {
             const fileInput = document.getElementById('file-input');
             const fileStatus = document.getElementById('file-status');
@@ -136,12 +145,12 @@
 
             const reader = new FileReader();
             reader.onload = function (e) {
-                // Tách lấy chuỗi base64 thuần để đóng gói gửi sang cổng cấu trúc của Google
+                // Lấy chuỗi dữ liệu base64 thô
                 selectedFileBase64 = e.target.result.split(',')[1];
             };
             reader.readAsDataURL(file);
         }
-        // Xử lý gửi lệnh truyền tin và phân tích dữ liệu thị giác đến Google Gemini
+        // Xử lý gửi tin nhắn lệnh cấu trúc dữ liệu cho Gemini
         async function sendToAI() {
             let inputField = document.getElementById('user-input');
             let apiKeyField = document.getElementById('api-key-field');
@@ -157,7 +166,7 @@
             let chatBox = document.getElementById('chat-box');
             let userMsgDiv = document.createElement('div');
             userMsgDiv.className = 'msg user-msg';
-            userMsgDiv.innerText = query || "Đã tải lên hình ảnh cấu trúc để phân tích.";
+            userMsgDiv.innerText = query || "Đã gửi hình ảnh.";
             
             if (selectedFileBase64) {
                 let imgPreview = document.createElement('img');
@@ -169,16 +178,14 @@
             chatBox.scrollTop = chatBox.scrollHeight;
 
             inputField.value = '';
-            let loadingId = appendMessage("🤖 Mắt thần Gemini đang quét ảnh và cấu trúc hóa bảng dữ liệu...", 'bot-msg');
+            let loadingId = appendMessage("🤖 Robot đang xử lý dữ liệu bảng...", 'bot-msg');
 
             try {
-                // Thiết lập cấu trúc Prompt ép xung ra mảng JSON thuần túy cho Luckysheet
-                const promptInstruct = `${query || "Đọc bảng dữ liệu trong ảnh này"}
-Nhiệm vụ của bạn là phân tích dữ liệu từ hình ảnh hoặc yêu cầu trên, trích xuất tất cả thành một mảng cấu trúc JSON thuần để cập nhật trực tiếp vào lưới Excel. Không viết thêm bất kỳ từ ngữ giải thích nào khác ngoài JSON.
-Định dạng JSON chuẩn bắt buộc: [{"row": số_hàng, "col": số_cột, "val": giá_trị_hoặc_công_thức}]
-Lưu ý: Hàng đầu tiên tương ứng với row: 0. Nếu có tính tổng hay tính toán hãy dùng công thức Excel như "=SUM(B2:B5)"`;
+                const promptInstruct = `${query || "Đọc bảng dữ liệu trong ảnh"}
+Bạn là trợ lý ảo điền dữ liệu vào bảng tính. Phân tích ảnh hoặc yêu cầu của người dùng, chuyển thông tin thành cấu trúc mảng JSON. Không giải thích gì thêm ngoài JSON.
+Định dạng JSON bắt buộc: [{"row": số_hàng, "col": số_cột, "val": "giá_trị"}]
+Lưu ý: Hàng đầu tiên (A1, B1...) có số_hàng là 0, số_cột là 0 (Cột A=0, B=1...). Các ô tính tổng hoặc công thức dùng chữ viết hoa như "=SUM(B2:B5)"`;
 
-                // Xây dựng cấu trúc gói tin theo giao thức Google AI Studio [Zapier]
                 let parts = [{ text: promptInstruct }];
                 if (selectedFileBase64) {
                     parts.push({
@@ -189,7 +196,7 @@ Lưu ý: Hàng đầu tiên tương ứng với row: 0. Nếu có tính tổng h
                     });
                 }
 
-                // Thực hiện gọi Endpoint chính thức của Google Gemini [Google Cloud Blog]
+                // Gọi tới mô hình gemini-2.5-flash của Google
                 const url = `https://googleapis.com{apiKey}`;
                 
                 const response = await fetch(url, {
@@ -201,13 +208,12 @@ Lưu ý: Hàng đầu tiên tương ứng với row: 0. Nếu có tính tổng h
                 const rawData = await response.json();
                 
                 if (rawData.error) {
-                    document.getElementById(loadingId).innerText = "❌ Lỗi xác thực Gemini: " + rawData.error.message;
+                    document.getElementById(loadingId).innerText = "❌ Lỗi: " + rawData.error.message;
                     return;
                 }
 
                 let aiTextResponse = rawData.candidates[0].content.parts[0].text.trim();
                 
-                // Loại bỏ ký tự bao bọc mã code nếu Gemini tự động thêm vào
                 if (aiTextResponse.includes("```")) {
                     aiTextResponse = aiTextResponse.replace(/```json|```/g, "").trim();
                 }
@@ -216,54 +222,47 @@ Lưu ý: Hàng đầu tiên tương ứng với row: 0. Nếu có tính tổng h
                 
                 if (Array.isArray(cellDataArray)) {
                     cellDataArray.forEach(cell => {
-                        if (cell.val && typeof cell.val === 'string' && cell.val.startsWith('=')) {
-                            luckysheet.setCellValue(cell.row, cell.col, { f: cell.val });
-                        } else {
-                            luckysheet.setCellValue(cell.row, cell.col, cell.val);
-                        }
+                        // Cập nhật giá trị trực tiếp vào ô lưới của hệ thống mới
+                        tableInstance.setValueFromCoords(cell.col, cell.row, cell.val);
                     });
-                    luckysheet.refresh();
-                    document.getElementById(loadingId).innerText = "✅ Robot Gemini đã phân tích thị giác và ghi dữ liệu thành công vào bảng tính!";
+                    document.getElementById(loadingId).innerText = "✅ Robot đã điền dữ liệu thành công vào bảng tính!";
                 } else {
-                    document.getElementById(loadingId).innerText = "🤖 Dữ liệu phản hồi từ Gemini không khớp định dạng bảng Excel.";
+                    document.getElementById(loadingId).innerText = "🤖 Robot phản hồi dữ liệu lỗi, vui lòng thử lại.";
                 }
 
             } catch (error) {
-                document.getElementById(loadingId).innerText = "❌ Gặp sự cố xử lý ảnh. Hãy chắc chắn ảnh rõ nét và Key chính xác!";
+                document.getElementById(loadingId).innerText = "❌ Gặp lỗi khi xử lý dữ liệu. Vui lòng kiểm tra lại Key hoặc độ nét của ảnh!";
                 console.error(error);
             } finally {
-                // Dọn dẹp trạng thái file sau phiên truyền tải dữ liệu
                 document.getElementById('file-input').value = "";
                 document.getElementById('file-status').innerText = "Chưa có ảnh nào được chọn";
                 selectedFileBase64 = null; selectedFileType = null;
             }
         }
 
-        // Chức năng xuất dữ liệu cấu trúc thành file Excel đuôi .xlsx thực tế
+        // Tải file .xlsx về máy tính
         function exportToExcel() {
-            let sheets = luckysheet.getluckysheetfile();
-            if (!sheets || sheets.length === 0) return alert("Bảng tính hiện tại trống!");
-
+            if (!tableInstance) return alert("Bảng tính trống!");
+            let data = tableInstance.getData();
+            
             let workbook = new ExcelJS.Workbook();
-            sheets.forEach(sheet => {
-                let worksheet = workbook.addWorksheet(sheet.name);
-                let matrix = luckysheet.transToCellData(sheet.data);
-                if(matrix){
-                    matrix.forEach(cell => {
-                        let row = cell.r + 1; let col = cell.c + 1; let cellValue = cell.v;
-                        if (cellValue) {
-                            let cellObj = worksheet.getCell(row, col);
-                            if (cellValue.f) {
-                                cellObj.value = { formula: cellValue.f.substring(1), result: cellValue.v };
-                            } else {
-                                cellObj.value = cellValue.v !== undefined ? cellValue.v : cellValue.m;
-                            }
+            let worksheet = workbook.addWorksheet('Sheet1');
+
+            data.forEach((row, rowIndex) => {
+                row.forEach((cellValue, colIndex) => {
+                    if (cellValue !== '') {
+                        let cellObj = worksheet.getCell(rowIndex + 1, colIndex + 1);
+                        if (typeof cellValue === 'string' && cellValue.startsWith('=')) {
+                            cellObj.value = { formula: cellValue.substring(1) };
+                        } else {
+                            cellObj.value = cellValue;
                         }
-                    });
-                }
+                    }
+                });
             });
+
             workbook.xlsx.writeBuffer().then(buffer => {
-                saveAs(new Blob([buffer]), "Bao_Cao_Excel_Gemini.xlsx");
+                saveAs(new Blob([buffer]), "Bao_Cao_Excel_Moi.xlsx");
             });
         }
 
