@@ -4,43 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Co-Pilot Spreadsheet - Powered by Google Gemini</title>
+    <!-- Nhúng thư viện SheetJS để đọc và xuất file Excel -->
     <script src="https://jsdelivr.net"></script>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { display: flex; flex-direction: column; height: 100vh; background-color: #f4f6f9; color: #333; }
-        header { background-color: #107c41; color: white; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .config-area { display: flex; gap: 10px; align-items: center; }
-        .config-area input { padding: 6px 10px; border: none; border-radius: 4px; width: 250px; }
-        .main-container { display: flex; flex: 1; overflow: hidden; }
-        .sidebar { width: 350px; background: white; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; padding: 15px; box-shadow: 2px 0 5px rgba(0,0,0,0.02); }
-        .chat-history { flex: 1; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px; padding: 10px; margin-bottom: 10px; background: #fafafa; font-size: 14px; }
-        .msg { margin-bottom: 10px; padding: 8px 12px; border-radius: 6px; max-width: 85%; line-height: 1.4; }
-        .msg.user { background: #e1f5fe; margin-left: auto; color: #0277bd; }
-        .msg.ai { background: #f1f1f1; margin-right: auto; color: #333; }
-        .msg.error { background: #ffebee; color: #c62828; margin-right: auto; }
-        .preview-img { max-width: 100%; max-height: 100px; margin-top: 5px; border-radius: 4px; display: block; border: 1px dashed #ccc; }
-        .file-info { font-size: 12px; color: #0078d4; background: #e6f4ff; padding: 6px; border-radius: 4px; margin-top: 5px; font-weight: 500; display: none; }
-        .input-group { background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px solid #e0e0e0; margin-bottom: 8px; }
-        textarea { width: 100%; height: 65px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: none; margin-bottom: 8px; font-size: 14px; }
-        .btn-row { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
-        button { background: #107c41; color: white; border: none; padding: 10px 12px; border-radius: 4px; cursor: pointer; font-weight: 600; transition: background 0.2s; font-size: 13px; }
-        button:hover { background: #0b592e; }
-        .btn-send { flex: 1; min-width: 80px; }
-        .btn-media { background: #6c757d; }
-        .btn-media:hover { background: #5a6268; }
-        .btn-export { background: #0078d4; width: 100%; font-size: 14px; padding: 12px; }
-        .btn-export:hover { background: #005a9e; }
-        .content { flex: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; }
-        .table-toolbar { display: flex; gap: 10px; margin-bottom: 10px; }
-        .btn-tool { background: #f3f3f3; color: #333; border: 1px solid #ccc; font-size: 12px; padding: 6px 12px; font-weight: normal; }
-        .btn-tool:hover { background: #e1e1e1; }
-        .table-container { flex: 1; background: white; border: 1px solid #d0d0d0; border-radius: 4px; overflow: auto; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        table { border-collapse: collapse; min-width: 100%; font-size: 14px; }
-        th, td { border: 1px solid #d0d0d0; padding: 6px 10px; text-align: left; min-width: 110px; outline: none; }
-        th { background-color: #f3f3f3; font-weight: 600; position: sticky; top: 0; z-index: 10; color: #444; }
-        td:focus { background-color: #e8f5e9; border: 2px solid #107c41; padding: 5px 9px; }
-        .loading { display: none; text-align: center; color: #666; font-size: 13px; margin-bottom: 8px; font-style: italic; }
-    </style>
+    <!-- Liên kết tới file giao diện CSS riêng biệt -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header>
@@ -54,9 +21,9 @@
 <div class="main-container">
     <div class="sidebar">
         <h3>💬 Ra lệnh cho Robot</h3>
-        <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Hệ thống chạy bằng Google Gemini hoàn toàn miễn phí. Hãy dán dữ liệu hoặc ra lệnh nhé!</p>
+        <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Hệ thống chạy bằng Google Gemini hoàn toàn miễn phí.</p>
         <div class="chat-history" id="chatHistory">
-            <div class="msg ai">Chào sếp! Hệ thống đã được cấu hình sang phiên bản Gemini mới nhất. Sếp hãy nhập khóa API ở góc trên rồi thử gửi lệnh lại nhé!</div>
+            <div class="msg ai">Chào sếp! Hệ thống đã được cấu trúc lại gọn gàng. Sếp hãy nhập khóa API ở góc trên rồi bắt đầu ra lệnh nhé!</div>
         </div>
         
         <div class="input-group">
@@ -95,203 +62,426 @@
         </div>
     </div>
 </div>
-<script>
-    const apiKeyInput = document.getElementById('apiKey');
-    if (localStorage.getItem('geminiAiKey')) apiKeyInput.value = localStorage.getItem('geminiAiKey');
-    apiKeyInput.addEventListener('input', () => localStorage.setItem('geminiAiKey', apiKeyInput.value.trim()));
 
-    let base64Image = "";
-    let extractedFileText = "";
-
-    document.getElementById('btnSelectImage').addEventListener('click', () => document.getElementById('imageInput').click());
-    document.getElementById('btnSelectFile').addEventListener('click', () => document.getElementById('fileInput').click());
-    
-    document.getElementById('imageInput').addEventListener('change', function(e) {
-        const file = e.target.files; if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            base64Image = evt.target.result;
-            document.getElementById('imgPreview').src = base64Image;
-            document.getElementById('imgPreview').style.display = 'block';
-            document.getElementById('fileInfoBox').style.display = 'none'; extractedFileText = "";
-        };
-        reader.readAsDataURL(file);
-    });
-
-    document.getElementById('fileInput').addEventListener('change', function(e) {
-        const file = e.target.files; if (!file) return;
-        document.getElementById('fileInfoBox').innerText = `📄 Đang đính kèm: ${file.name}`;
-        document.getElementById('fileInfoBox').style.display = 'block';
-        document.getElementById('imgPreview').style.display = 'none'; base64Image = "";
-
-        const reader = new FileReader();
-        const ext = file.name.split('.').pop().toLowerCase();
-        if (ext === 'xlsx' || ext === 'xls') {
-            reader.onload = function(evt) {
-                const data = new Uint8Array(evt.target.result);
-                const wb = XLSX.read(data, {type: 'array'});
-                const json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames], {header: 1});
-                extractedFileText = "Dữ liệu đính kèm file Excel:\n" + JSON.stringify(json);
-            };
-            reader.readAsArrayBuffer(file);
-        } else {
-            reader.onload = function(evt) { extractedFileText = "Dữ liệu file văn bản:\n" + evt.target.result; };
-            reader.readAsText(file);
-        }
-    });
-    function getCurrentTableDataFromUI() {
-        const table = document.getElementById('spreadsheet');
-        const headers = [];
-        table.querySelectorAll('thead th').forEach(th => headers.push(th.innerText.trim()));
-        const rows = [];
-        table.querySelectorAll('tbody tr').forEach(tr => {
-            const rowData = [];
-            tr.querySelectorAll('td').forEach(td => rowData.push(td.innerText.trim()));
-            rows.push(rowData);
-        });
-        return { headers, rows };
-    }
-
-    function renderTable(data) {
-        const table = document.getElementById('spreadsheet');
-        table.innerHTML = '';
-        const thead = document.createElement('thead');
-        const headerRow = document.createElement('tr');
-        data.headers.forEach(h => {
-            const th = document.createElement('th'); th.setAttribute('contenteditable', 'true');
-            th.innerText = h; headerRow.appendChild(th);
-        });
-        thead.appendChild(headerRow); table.appendChild(thead);
-
-        const tbody = document.createElement('tbody');
-        data.rows.forEach(r => {
-            const row = document.createElement('tr');
-            r.forEach(cell => {
-                const td = document.createElement('td'); td.setAttribute('contenteditable', 'true');
-                td.innerText = cell ?? ''; row.appendChild(td);
-            });
-            tbody.appendChild(row);
-        });
-        table.appendChild(tbody);
-    }
-
-    document.getElementById('spreadsheet').addEventListener('paste', function(e) {
-        e.preventDefault();
-        const text = (e.originalEvent || e).clipboardData.getData('text/plain');
-        const rows = text.split('\n').map(row => row.split('\t'));
-        const targetTd = e.target;
-        if (targetTd.tagName !== 'TD') return;
-        const targetTr = targetTd.parentNode;
-        const startRowIdx = Array.from(targetTr.parentNode.children).indexOf(targetTr);
-        const startColIdx = Array.from(targetTr.children).indexOf(targetTd);
-        const tbody = targetTr.parentNode;
-        
-        rows.forEach((row, rOffset) => {
-            if (!row.join('').trim()) return;
-            let currentTr = tbody.children[startRowIdx + rOffset];
-            if (!currentTr) {
-                currentTr = document.createElement('tr');
-                const colCount = tbody.parentNode.querySelectorAll('thead th').length;
-                for(let i=0; i<colCount; i++) {
-                    const td = document.createElement('td'); td.setAttribute('contenteditable', 'true');
-                    currentTr.appendChild(td);
-                }
-                tbody.appendChild(currentTr);
-            }
-            row.forEach((cellValue, cOffset) => {
-                const currentTd = currentTr.children[startColIdx + cOffset];
-                if (currentTd) currentTd.innerText = cellValue.trim();
-            });
-        });
-    });
-    document.getElementById('btnAddRow').addEventListener('click', () => {
-        const tbody = document.querySelector('#spreadsheet tbody');
-        const colCount = document.querySelectorAll('#spreadsheet thead th').length || 4;
-        const tr = document.createElement('tr');
-        for(let i=0; i<colCount; i++) {
-            const td = document.createElement('td'); td.setAttribute('contenteditable', 'true'); tr.appendChild(td);
-        }
-        tbody.appendChild(tr);
-    });
-
-    document.getElementById('btnAddCol').addEventListener('click', () => {
-        const th = document.createElement('th'); th.setAttribute('contenteditable', 'true');
-        th.innerText = `Cột ${document.querySelectorAll('#spreadsheet thead th').length + 1}`;
-        document.querySelector('#spreadsheet thead tr').appendChild(th);
-        document.querySelectorAll('#spreadsheet tbody tr').forEach(tr => {
-            const td = document.createElement('td'); td.setAttribute('contenteditable', 'true'); tr.appendChild(td);
-        });
-    });
-
-    document.getElementById('btnClearTable').addEventListener('click', () => {
-        renderTable({ headers: ["Cột 1", "Cột 2", "Cột 3", "Cột 4"], rows: [["","","",""],["","","",""]] });
-    });
-
-    document.getElementById('btnSend').addEventListener('click', async () => {
-        const prompt = document.getElementById('promptInput').value.trim();
-        const apiKey = apiKeyInput.value.trim();
-        if (!apiKey) return alert('Vui lòng nhập Gemini API Key!');
-
-        const tableState = getCurrentTableDataFromUI();
-        addMessage(prompt || "Yêu cầu AI phân tích dữ liệu bảng hiện tại.", 'user');
-        
-        document.getElementById('promptInput').value = '';
-        document.getElementById('imgPreview').style.display = 'none';
-        document.getElementById('fileInfoBox').style.display = 'none';
-        document.getElementById('loadingState').style.display = 'block';
-
-        const systemInstruction = `You are an AI data assistant. Analyze the user's current table data and apply their modifications. You must return ONLY a raw valid JSON object replacing/updating the spreadsheet. No chat, no markdown format blocks. Current Table Data on screen: ${JSON.stringify(tableState)}. Output JSON schema: {"headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]]}`;
-
-        let finalPromptText = prompt;
-        if (extractedFileText) finalPromptText = `${prompt}\n\n[Dữ liệu đính kèm thêm]:\n${extractedFileText}`;
-
-        let userContent = [{ type: "text", text: finalPromptText || "Hãy phân tích bảng dữ liệu hiện tại." }];
-        if (base64Image) userContent.push({ type: "image_url", image_url: { url: base64Image } });
-
-        try {
-            const response = await fetch('https://googleapis.com', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-                body: JSON.stringify({ 
-                    model: 'gemini-2.5-flash', 
-                    messages: [{ role: 'system', content: systemInstruction }, { role: 'user', content: userContent }], 
-                    temperature: 0.2 
-                })
-            });
-
-            const result = await response.json();
-            document.getElementById('loadingState').style.display = 'none';
-            base64Image = ""; extractedFileText = "";
-
-            if (result.error) return addMessage(`Lỗi: ${result.error.message}`, 'error');
-
-            let aiContent = result.choices.message.content.trim();
-            if (aiContent.startsWith('```json')) aiContent = aiContent.replace('```json', '');
-            if (aiContent.endsWith('```')) aiContent = aiContent.substring(0, aiContent.length - 3);
-
-            const parsedData = JSON.parse(aiContent.trim());
-            renderTable(parsedData);
-            addMessage('Đã cập nhật bảng cùng sếp (Chạy bằng Gemini miễn phí)!', 'ai');
-        } catch (err) {
-            document.getElementById('loadingState').style.display = 'none';
-            addMessage(`Lỗi hệ thống: ${err.message}`, 'error');
-        }
-    });
-
-    function addMessage(text, sender) {
-        const history = document.getElementById('chatHistory');
-        const div = document.createElement('div'); div.className = `msg ${sender}`; div.innerText = text;
-        history.appendChild(div); history.scrollTop = history.scrollHeight;
-    }
-
-    document.getElementById('btnExport').addEventListener('click', () => {
-        const tableState = getCurrentTableDataFromUI();
-        const wb = XLSX.utils.book_new();
-        const dataArray = [tableState.headers, ...tableState.rows];
-        const ws = XLSX.utils.aoa_to_sheet(dataArray);
-        XLSX.utils.book_append_sheet(wb, ws, "AI_Spreadsheet");
-        XLSX.writeFile(wb, "ai_spreadsheet_export.xlsx");
-    });
-</script>
+<!-- Liên kết tới file xử lý JavaScript riêng biệt -->
+<script src="script.js"></script>
 </body>
 </html>
+* { 
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+}
+body { 
+    display: flex; 
+    flex-direction: column; 
+    height: 100vh; 
+    background-color: #f4f6f9; 
+    color: #333; 
+}
+header { 
+    background-color: #107c41; 
+    color: white; 
+    padding: 12px 20px; 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1); 
+}
+.config-area { 
+    display: flex; 
+    gap: 10px; 
+    align-items: center; 
+}
+.config-area input { 
+    padding: 6px 10px; 
+    border: none; 
+    border-radius: 4px; 
+    width: 250px; 
+}
+.main-container { 
+    display: flex; 
+    flex: 1; 
+    overflow: hidden; 
+}
+.sidebar { 
+    width: 350px; 
+    background: white; 
+    border-right: 1px solid #e0e0e0; 
+    display: flex; 
+    flex-direction: column; 
+    padding: 15px; 
+    box-shadow: 2px 0 5px rgba(0,0,0,0.02); 
+}
+.chat-history { 
+    flex: 1; 
+    overflow-y: auto; 
+    border: 1px solid #e0e0e0; 
+    border-radius: 4px; 
+    padding: 10px; 
+    margin-bottom: 10px; 
+    background: #fafafa; 
+    font-size: 14px; 
+}
+.msg { 
+    margin-bottom: 10px; 
+    padding: 8px 12px; 
+    border-radius: 6px; 
+    max-width: 85%; 
+    line-height: 1.4; 
+    word-break: break-word; 
+}
+.msg.user { 
+    background: #e1f5fe; 
+    margin-left: auto; 
+    color: #0277bd; 
+}
+.msg.ai { 
+    background: #f1f1f1; 
+    margin-right: auto; 
+    color: #333; 
+}
+.msg.error { 
+    background: #ffebee; 
+    color: #c62828; 
+    margin-right: auto; 
+    font-weight: bold; 
+}
+.preview-img { 
+    max-width: 100%; 
+    max-height: 100px; 
+    margin-top: 5px; 
+    border-radius: 4px; 
+    display: block; 
+    border: 1px dashed #ccc; 
+}
+.file-info { 
+    font-size: 12px; 
+    color: #0078d4; 
+    background: #e6f4ff; 
+    padding: 6px; 
+    border-radius: 4px; 
+    margin-top: 5px; 
+    font-weight: 500; 
+    display: none; 
+}
+.input-group { 
+    background: #f9f9f9; 
+    padding: 10px; 
+    border-radius: 6px; 
+    border: 1px solid #e0e0e0; 
+    margin-bottom: 8px; 
+}
+textarea { 
+    width: 100%; 
+    height: 65px; 
+    padding: 8px; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    resize: none; 
+    margin-bottom: 8px; 
+    font-size: 14px; 
+}
+.btn-row { 
+    display: flex; 
+    gap: 6px; 
+    margin-bottom: 8px; 
+    flex-wrap: wrap; 
+}
+button { 
+    background: #107c41; 
+    color: white; 
+    border: none; 
+    padding: 10px 12px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    font-weight: 600; 
+    transition: background 0.2s; 
+    font-size: 13px; 
+}
+button:hover { 
+    background: #0b592e; 
+}
+.btn-send { 
+    flex: 1; 
+    min-width: 80px; 
+}
+.btn-media { 
+    background: #6c757d; 
+}
+.btn-media:hover { 
+    background: #5a6268; 
+}
+.btn-export { 
+    background: #0078d4; 
+    width: 100%; 
+    font-size: 14px; 
+    padding: 12px; 
+}
+.btn-export:hover { 
+    background: #005a9e; 
+}
+.content { 
+    flex: 1; 
+    padding: 20px; 
+    overflow: auto; 
+    display: flex; 
+    flex-direction: column; 
+}
+.table-toolbar { 
+    display: flex; 
+    gap: 10px; 
+    margin-bottom: 10px; 
+}
+.btn-tool { 
+    background: #f3f3f3; 
+    color: #333; 
+    border: 1px solid #ccc; 
+    font-size: 12px; 
+    padding: 6px 12px; 
+    font-weight: normal; 
+}
+.btn-tool:hover { 
+    background: #e1e1e1; 
+}
+.table-container { 
+    flex: 1; 
+    background: white; 
+    border: 1px solid #d0d0d0; 
+    border-radius: 4px; 
+    overflow: auto; 
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+}
+table { 
+    border-collapse: collapse; 
+    min-width: 100%; 
+    font-size: 14px; 
+}
+th, td { 
+    border: 1px solid #d0d0d0; 
+    padding: 6px 10px; 
+    text-align: left; 
+    min-width: 110px; 
+    outline: none; 
+}
+th { 
+    background-color: #f3f3f3; 
+    font-weight: 600; 
+    position: sticky; 
+    top: 0; 
+    z-index: 10; 
+    color: #444; 
+}
+td:focus { 
+    background-color: #e8f5e9; 
+    border: 2px solid #107c41; 
+    padding: 5px 9px; 
+}
+.loading { 
+    display: none; 
+    text-align: center; 
+    color: #666; 
+    font-size: 13px; 
+    margin-bottom: 8px; 
+    font-style: italic; 
+}
+const apiKeyInput = document.getElementById('apiKey');
+
+// Tự động khôi phục API Key từ bộ nhớ trình duyệt nếu có
+if (localStorage.getItem('geminiAiKey')) apiKeyInput.value = localStorage.getItem('geminiAiKey');
+apiKeyInput.addEventListener('input', () => localStorage.setItem('geminiAiKey', apiKeyInput.value.trim()));
+
+let base64ImageString = "";
+let base64ImageMime = "";
+let extractedFileText = "";
+
+document.getElementById('btnSelectImage').addEventListener('click', () => document.getElementById('imageInput').click());
+document.getElementById('btnSelectFile').addEventListener('click', () => document.getElementById('fileInput').click());
+
+// Xử lý tải ảnh lên (Tách Base64 và MimeType chuẩn)
+document.getElementById('imageInput').addEventListener('change', function(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const fullBase64 = evt.target.result;
+        document.getElementById('imgPreview').src = fullBase64;
+        document.getElementById('imgPreview').style.display = 'block';
+        document.getElementById('fileInfoBox').style.display = 'none'; 
+        
+        base64ImageMime = fullBase64.substring(fullBase64.indexOf(":") + 1, fullBase64.indexOf(";"));
+        base64ImageString = fullBase64.substring(fullBase64.indexOf(",") + 1);
+        extractedFileText = "";
+    };
+    reader.readAsDataURL(file);
+});
+
+// Xử lý tải các định dạng File Excel hoặc Văn bản vào phần mềm
+document.getElementById('fileInput').addEventListener('change', function(e) {
+    const file = e.target.files[0]; if (!file) return;
+    const reader = new FileReader();
+    
+    if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+        reader.onload = function(evt) {
+            const data = new Uint8Array(evt.target.result);
+            const workbook = XLSX.read(data, {type: 'array'});
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+            renderTableFromData(jsonData);
+            showFileInfo(`Đã nhập bảng từ file: ${file.name}`);
+        };
+        reader.readAsArrayBuffer(file);
+    } else {
+        reader.onload = function(evt) {
+            extractedFileText = evt.target.result;
+            showFileInfo(`Đính kèm file văn bản: ${file.name}`);
+            base64ImageString = ""; base64ImageMime = "";
+            document.getElementById('imgPreview').style.display = 'none';
+        };
+        reader.readAsText(file);
+    }
+});
+
+function showFileInfo(text) {
+    const box = document.getElementById('fileInfoBox');
+    box.innerText = text;
+    box.style.display = 'block';
+}
+
+// Các nút tiện ích tăng/giảm số cột và số hàng của bảng
+document.getElementById('btnAddRow').addEventListener('click', () => {
+    const tbody = document.querySelector('#spreadsheet tbody');
+    const colCount = document.querySelectorAll('#spreadsheet thead th').length;
+    const tr = document.createElement('tr');
+    for(let i=0; i<colCount; i++) tr.innerHTML += '<td contenteditable="true"></td>';
+    tbody.appendChild(tr);
+});
+
+document.getElementById('btnAddCol').addEventListener('click', () => {
+    const theadRow = document.querySelector('#spreadsheet thead tr');
+    const th = document.createElement('th');
+    th.contenteditable = "true";
+    th.innerText = `Cột ${theadRow.children.length + 1}`;
+    theadRow.appendChild(th);
+
+    document.querySelectorAll('#spreadsheet tbody tr').forEach(tr => {
+        tr.innerHTML += '<td contenteditable="true"></td>';
+    });
+});
+
+document.getElementById('btnClearTable').addEventListener('click', () => {
+    document.querySelectorAll('#spreadsheet td').forEach(td => td.innerText = "");
+});
+
+function getTableData() {
+    const headers = Array.from(document.querySelectorAll('#spreadsheet thead th')).map(th => th.innerText.trim());
+    const rows = Array.from(document.querySelectorAll('#spreadsheet tbody tr')).map(tr => {
+        return Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim());
+    });
+    return { headers, rows };
+}
+
+function renderTableFromData(data) {
+    if (!data || data.length === 0) return;
+    const theadRow = document.querySelector('#spreadsheet thead tr');
+    const tbody = document.querySelector('#spreadsheet tbody');
+    theadRow.innerHTML = "";
+    tbody.innerHTML = "";
+
+    const headers = data[0];
+    headers.forEach(h => {
+        theadRow.innerHTML += `<th contenteditable="true">${h || ''}</th>`;
+    });
+
+    for (let i = 1; i < data.length; i++) {
+        const tr = document.createElement('tr');
+        headers.forEach((_, colIndex) => {
+            tr.innerHTML += `<td contenteditable="true">${data[i][colIndex] ?? ''}</td>`;
+        });
+        tbody.appendChild(tr);
+    }
+}
+
+// Bấm nút gửi lệnh lên hệ thống AI Gemini của Google
+document.getElementById('btnSend').addEventListener('click', async () => {
+    const apiKey = apiKeyInput.value.trim();
+    const promptText = document.getElementById('promptInput').value.trim();
+    if (!apiKey) return alert("Vui lòng nhập Gemini API Key ở góc trên cùng bên phải!");
+    if (!promptText) return alert("Vui lòng nhập nội dung yêu cầu xử lý dữ liệu!");
+
+    appendMessage(promptText, 'user');
+    document.getElementById('promptInput').value = "";
+    const loading = document.getElementById('loadingState');
+    loading.style.display = 'block';
+
+    const currentTable = getTableData();
+    const systemInstruction = "Bạn là một AI Co-Pilot chuyên về bảng tính. Hãy phân tích bảng dữ liệu hiện tại kết hợp với yêu cầu của người dùng để tính toán hoặc cập nhật bảng. Bắt buộc phải phản hồi dưới dạng JSON cấu trúc: {\"analysis\": \"Chuỗi tóm tắt hành động ngắn gọn\", \"table\": [ [\"Cột 1\", \"Cột 2\"], [\"Giá trị 1\", \"Giá trị 2\"] ] }. Tuyệt đối không viết thêm chữ hay ký tự bọc ngoài khối JSON.";
+
+    try {
+        let textParts = `Yêu cầu của người dùng: ${promptText}\n\nDữ liệu bảng hiện tại:\n${JSON.stringify([currentTable.headers, ...currentTable.rows])}`;
+        if (extractedFileText) textParts += `\n\nNội dung file đính kèm:\n${extractedFileText}`;
+        
+        let parts = [{ text: textParts }];
+
+        if (base64ImageString && base64ImageMime) {
+            parts.push({
+                inlineData: { mimeType: base64ImageMime, data: base64ImageString }
+            });
+        }
+
+        const response = await fetch(`https://googleapis.com{apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: parts }],
+                systemInstruction: { parts: [{ text: systemInstruction }] },
+                generationConfig: { responseMimeType: "application/json" }
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error?.message || `HTTP status ${response.status}`);
+        }
+
+        const result = await response.json();
+        loading.style.display = 'none';
+
+        const replyText = result.candidates[0].content.parts[0].text;
+        const parsedData = JSON.parse(replyText.trim());
+
+        appendMessage(parsedData.analysis || "Đã xử lý bảng dữ liệu xong!", 'ai');
+        if (parsedData.table) {
+            renderTableFromData(parsedData.table);
+        }
+
+        // Reset bộ nhớ đệm
+        base64ImageString = ""; base64ImageMime = ""; extractedFileText = "";
+        document.getElementById('imgPreview').style.display = 'none';
+        document.getElementById('fileInfoBox').style.display = 'none';
+
+    } catch (err) {
+        loading.style.display = 'none';
+        appendMessage(`Lỗi hệ thống: ${err.message}. Hãy kiểm tra lại API Key hoặc tắt tiện ích chặn quảng cáo (Adblock).`, 'error');
+    }
+});
+
+function appendMessage(text, sender) {
+    const history = document.getElementById('chatHistory');
+    const msg = document.createElement('div');
+    msg.classList.add('msg', sender);
+    msg.innerText = text;
+    history.appendChild(msg);
+    history.scrollTop = history.scrollHeight;
+}
+
+// Tính năng tải dữ liệu dạng .xlsx về máy tính
+document.getElementById('btnExport').addEventListener('click', () => {
+    const currentTable = getTableData();
+    const dataArr = [currentTable.headers, ...currentTable.rows];
+    const worksheet = XLSX.utils.aoa_to_sheet(dataArr);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+    XLSX.writeFile(workbook, "AI_Copilot_Spreadsheet.xlsx");
+});
