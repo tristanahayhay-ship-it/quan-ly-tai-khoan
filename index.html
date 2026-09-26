@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Super Excel - Thao Tác Y Hệt Excel</title>
-    <!-- Nhúng thư viện Excel chuyên nghiệp Jspreadsheet và Boss XLSX -->
+    <title>AI Super Excel Pro - Hoạt Động Hoàn Hảo</title>
+    <!-- Nhúng đúng bộ thư viện Excel chuyên nghiệp -->
     <script src="https://jsdelivr.net"></script>
     <script src="https://jsdelivr.net"></script>
     <link rel="stylesheet" href="https://jsdelivr.net" type="text/css" />
@@ -34,13 +34,13 @@
         .btn-media { background: #6c757d; }
         .btn-export { background: #0078d4; width: 100%; padding: 12px; font-size: 14px; }
         .content { flex: 1; padding: 20px; overflow: auto; display: flex; flex-direction: column; background: #fff; }
-        .excel-outer { flex: 1; overflow: auto; border: 1px solid #ccc; border-radius: 4px; position: relative; }
+        .excel-outer { flex: 1; overflow: auto; border: 1px solid #ccc; border-radius: 4px; padding: 5px; }
         .loading { display: none; text-align: center; color: #666; font-size: 13px; margin-bottom: 8px; font-style: italic; }
     </style>
 </head>
 <body>
 <header>
-    <h2>📊 AI Super Excel Pro (Giao diện Excel gốc)</h2>
+    <h2>📊 AI Super Excel Pro</h2>
     <div class="config-area">
         <label for="apiKey">OpenAI API Key:</label>
         <input type="password" id="apiKey" placeholder="sk-..." />
@@ -49,14 +49,14 @@
 
 <div class="main-container">
     <div class="sidebar">
-        <h3>💬 Trợ lý AI Đa Năng</h3>
-        <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Bảng tính bên phải hoạt động y hệt Excel thật. Sếp thao tác tùy ý nhé!</p>
+        <h3>💬 Trợ lý AI Bảng Tính</h3>
+        <p style="font-size: 11px; color: #666; margin-bottom: 8px;">Bảng bên phải cho phép sửa tay, kéo thả, Ctrl+V thoải mái như Excel.</p>
         <div class="chat-history" id="chatHistory">
-            <div class="msg ai">Sếp ơi, bảng bên phải giờ kéo thả, copy paste nhảy ô y chang Excel rồi ạ. Sếp cần em tính toán hay xử lý gì cứ ra lệnh nhé!</div>
+            <div class="msg ai">Chào sếp! Giao diện lưới ô Excel đã được sửa lỗi hiển thị. Sếp hãy nhập API Key và kiểm tra bảng bên phải nhé!</div>
         </div>
         
         <div class="input-group">
-            <textarea id="promptInput" placeholder="Bảo AI làm việc..."></textarea>
+            <textarea id="promptInput" placeholder="Nhập yêu cầu cho AI..."></textarea>
             <input type="file" id="imageInput" accept="image/*" style="display: none;">
             <input type="file" id="fileInput" accept=".xlsx, .xls, .csv, .txt" style="display: none;">
             <div class="btn-row">
@@ -68,13 +68,13 @@
             <div id="fileInfoBox" class="file-info"></div>
         </div>
         
-        <div class="loading" id="loadingState">AI đang phân tích và dựng số liệu...</div>
+        <div class="loading" id="loadingState">AI đang phân tích và dựng bảng...</div>
         <button class="btn-export" id="btnExport">📥 Xuất file Excel (.xlsx)</button>
     </div>
 
     <div class="content">
-        <!-- Vùng chứa lưới ô Excel chuyên nghiệp -->
         <div class="excel-outer">
+            <!-- Đây là ô chứa bảng tính Excel -->
             <div id="spreadsheet"></div>
         </div>
     </div>
@@ -88,33 +88,30 @@
     let extractedFileText = "";
     let excelInstance = null;
 
-    // Khởi tạo bảng dữ liệu ban đầu gồm 10 cột, 30 hàng y hệt Excel trống
+    // Khởi tạo 30 hàng dữ liệu trống mặc định
     const initialData = [];
-    for (let i = 0; i < 30; i++) {
-        initialData.push(["", "", "", "", "", "", "", "", "", ""]);
-    }
+    for (let i = 0; i < 30; i++) { initialData.push(["", "", "", "", "", "", "", "", "", ""]); }
 
-    // Hàm dựng bảng tính chuẩn chuyên nghiệp
-    function initExcelTable(columns, rowsData) {
-        if (excelInstance) excelInstance.destroy(); // Xóa bảng cũ nếu có
+    // HÀM DỰNG BẢNG CHUẨN ĐÚNG PHIÊN BẢN JSPREADSHEET CE
+    function initExcelTable(headers, rowsData) {
+        const container = document.getElementById('spreadsheet');
+        container.innerHTML = ''; // Làm sạch vùng chứa cũ
         
-        excelInstance = jspreadsheet(document.getElementById('spreadsheet'), {
-            data: rowsData,
-            columns: columns.map(c => ({ title: c, width: 130, type: 'text' })),
-            minDimensions:[10, 30],
-            allowInsertRow: true,
-            allowInsertColumn: true,
-            allowDeleteRow: true,
-            allowDeleteColumn: true,
-            contextMenu: true, // Click chuột phải hiện menu chèn/xóa hàng cột giống Excel
-            columnSorting: true
+        excelInstance = jspreadsheet(container, {
+            worksheets: [{
+                data: rowsData,
+                columns: headers.map(h => ({ title: h, width: 120, type: 'text' })),
+                minDimensions: [10, 30]
+            }],
+            contextMenu: true // Bật chuột phải để chèn/xóa dòng cột
         });
     }
 
-    // Tự động dựng bảng trống lần đầu tiên khi mở web
+    // Tự động kích hoạt bảng tính ngay khi tải xong trang web
     const defaultHeaders = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
     initExcelTable(defaultHeaders, initialData);
-    // Xử lý các nút bấm đính kèm đa phương tiện
+
+    // Xử lý đính kèm hình ảnh và tệp
     document.getElementById('btnSelectImage').addEventListener('click', () => document.getElementById('imageInput').click());
     document.getElementById('btnSelectFile').addEventListener('click', () => document.getElementById('fileInput').click());
     
@@ -141,48 +138,50 @@
         if (ext === 'xlsx' || ext === 'xls') {
             reader.onload = function(evt) {
                 const data = new Uint8Array(evt.target.result);
-                const wb = xlsx.read(data, {type: 'array'});
-                const json = xlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1});
-                extractedFileText = "Dữ liệu đính kèm từ file Excel:\n" + JSON.stringify(json);
+                const wb = bossXlsx.read(data, {type: 'array'});
+                const json = bossXlsx.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header: 1});
+                extractedFileText = "Dữ liệu đính kèm file Excel:\n" + JSON.stringify(json);
             };
             reader.readAsArrayBuffer(file);
         } else {
-            reader.onload = function(evt) { extractedFileText = "Dữ liệu file văn bản:\n" + evt.target.result; };
+            reader.onload = function(evt) { extractedFileText = "Dữ liệu file:\n" + evt.target.result; };
             reader.readAsText(file);
         }
     });
 
-    // Hàm lấy cấu trúc dữ liệu thực tế đang hiển thị trên giao diện Siêu Excel để gửi cho AI
+    // Hàm lấy dữ liệu trên lưới ô web để gửi cho AI
     function getTableDataFromExcelUI() {
-        const headers = excelInstance.getHeaders().split(',');
-        const rows = excelInstance.getData();
+        if (!excelInstance) return { headers: [], rows: [] };
+        const ws = excelInstance.worksheets[0];
+        const headers = ws.getHeaders().split(',');
+        const rows = ws.getData();
         return { headers, rows };
     }
+
+    // Gửi lệnh xử lý
     document.getElementById('btnSend').addEventListener('click', async () => {
         const prompt = document.getElementById('promptInput').value.trim();
         const apiKey = apiKeyInput.value.trim();
         if (!apiKey) return alert('Vui lòng nhập OpenAI API Key!');
 
         const tableState = getTableDataFromExcelUI();
-        // Lọc bỏ bớt các dòng trống ở cuối để tối ưu dữ liệu gửi đi không bị dài
         const filteredRows = tableState.rows.filter(r => r.join('').trim() !== "");
         const minimalTableState = { headers: tableState.headers, rows: filteredRows.length > 0 ? filteredRows : [[""]] };
 
         addMessage(prompt || "Yêu cầu AI phân tích dữ liệu bảng hiện tại.", 'user');
-        
         document.getElementById('promptInput').value = '';
         document.getElementById('imgPreview').style.display = 'none';
         document.getElementById('fileInfoBox').style.display = 'none';
         document.getElementById('loadingState').style.display = 'block';
 
-        const systemInstruction = `You are an AI data assistant controlling a spreadsheet. Analyze the current table state and user request. Return ONLY a raw valid JSON object to replace/update the sheet. No chat, no markdown.
-Current Sheet Data on screen: ${JSON.stringify(minimalTableState)}.
-Output JSON schema: {"headers": ["Column1", "Column2"], "rows": [["Value1", "Value2"], ["Value3", "Value4"]]}`;
+        const systemInstruction = `You are an AI data assistant. Analyze the user's table data and update it based on the prompt. You must return ONLY a raw valid JSON object. No chat, no markdown. 
+Current Screen Sheet Data: ${JSON.stringify(minimalTableState)}.
+Output JSON schema: {"headers": ["Col1", "Col2"], "rows": [["Val1", "Val2"]]}`;
 
         let finalPromptText = prompt;
-        if (extractedFileText) finalPromptText = `${prompt}\n\n[Dữ liệu đính kèm thêm]:\n${extractedFileText}`;
+        if (extractedFileText) finalPromptText = `${prompt}\n\n[Dữ liệu đính kèm]:\n${extractedFileText}`;
 
-        let userContent = [{ type: "text", text: finalPromptText || "Hãy phân tích dữ liệu bảng tính." }];
+        let userContent = [{ type: "text", text: finalPromptText || "Hãy phân tích bảng dữ liệu." }];
         if (base64Image) userContent.push({ type: "image_url", image_url: { url: base64Image } });
 
         try {
@@ -208,15 +207,12 @@ Output JSON schema: {"headers": ["Column1", "Column2"], "rows": [["Value1", "Val
 
             const parsedData = JSON.parse(aiContent.trim());
             
-            // Đảm bảo dữ liệu đổ ra có tối thiểu số ô trống để sếp dễ thao tác tiếp
-            if(parsedData.rows.length < 20) {
-                while(parsedData.rows.length < 25) {
-                    parsedData.rows.push(new Array(parsedData.headers.length).fill(""));
-                }
+            if(parsedData.rows.length < 25) {
+                while(parsedData.rows.length < 25) { parsedData.rows.push(new Array(parsedData.headers.length).fill("")); }
             }
             
             initExcelTable(parsedData.headers, parsedData.rows);
-            addMessage('Đã xử lý số liệu và đồng bộ lên bảng tính Excel cho sếp rồi ạ!', 'ai');
+            addMessage('Đã đồng bộ số liệu lên bảng tính cho sếp rồi ạ!', 'ai');
         } catch (err) {
             document.getElementById('loadingState').style.display = 'none';
             addMessage(`Lỗi hệ thống: ${err.message}`, 'error');
@@ -231,11 +227,11 @@ Output JSON schema: {"headers": ["Column1", "Column2"], "rows": [["Value1", "Val
 
     document.getElementById('btnExport').addEventListener('click', () => {
         const tableState = getTableDataFromExcelUI();
-        const wb = xlsx.utils.book_new();
+        const wb = bossXlsx.utils.book_new();
         const dataArray = [tableState.headers, ...tableState.rows];
-        const ws = xlsx.utils.aoa_to_sheet(dataArray);
-        xlsx.utils.book_append_sheet(wb, ws, "Super_Excel");
-        xlsx.writeFile(wb, "ai_super_excel_export.xlsx");
+        const ws = bossXlsx.utils.aoa_to_sheet(dataArray);
+        bossXlsx.utils.book_append_sheet(wb, ws, "Super_Excel");
+        bossXlsx.writeFile(wb, "ai_super_excel_export.xlsx");
     });
 </script>
 </body>
